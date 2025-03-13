@@ -1,0 +1,122 @@
+<?php
+/**
+ * @var Laminas\View\Renderer\PhpRenderer $this
+ */
+?>
+<?= $this->doctype() ?>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <?= $this->headTitle('SSF - Dashboard')->setSeparator(' - ')->setAutoEscape(false) ?>
+
+    <?= $this->headMeta()
+        ->appendName('viewport', 'width=device-width, initial-scale=1.0')
+        ->appendHttpEquiv('X-UA-Compatible', 'IE=edge')
+    ?>
+
+    <!-- Custom meta tags -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- Favicon -->
+    <?= $this->headLink(['rel' => 'shortcut icon', 'type' => 'image/vnd.microsoft.icon', 'href' => $this->basePath() . '/img/favicon.ico']) ?>
+
+    <!-- DevExtreme CSS (versão gratuita) -->
+    <link rel="stylesheet" href="https://cdn3.devexpress.com/jslib/20.1.16/css/dx.common.css">
+    <link rel="stylesheet" href="https://cdn3.devexpress.com/jslib/20.1.16/css/dx.light.css">
+
+    <!-- Estilos globais -->
+    <?= $this->headLink()
+        ->prependStylesheet($this->basePath('css/style-global.css'))
+        ->prependStylesheet($this->basePath('css/sb-admin-2.min.css'))
+        ->prependStylesheet($this->basePath('css/bootstrap.min.css'))
+        ->prependStylesheet('https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i')
+        ->prependStylesheet($this->basePath('vendor/fontawesome-free/css/all.min.css'))
+    ?>
+
+    <!-- jQuery (DevExtreme e Bootstrap dependem dele) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- DevExtreme Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
+    <script src="https://cdn3.devexpress.com/jslib/20.1.16/js/dx.all.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cldrjs/0.5.5/cldr.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cldrjs/0.5.5/cldr/event.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cldrjs/0.5.5/cldr/supplemental.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/globalize/1.6.0/globalize.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/globalize/1.6.0/globalize/date.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    
+    <!-- Scripts personalizados -->
+    <?= $this->headScript() ?>
+</head>
+
+<body class="bg-gradient-primary">
+    <!-- Outer Row -->
+    <div class="row justify-content-center align-items-center vh-100">
+        <div class="col-xl-3 col-lg-4 col-md-6 col-sm-8"> 
+            <div class="card o-hidden border-0 shadow-lg" style="max-width: 100%; width: 100%; margin: auto;">
+                <div class="card-body p-0">
+                    <div class="text-center mt-3 mb-3">
+                        <img src="<?= $this->basePath('img/ssf.png') ?>" alt="Logo" class="img-fluid" style="max-width: 70%; height: auto;"> 
+                    </div>
+                    <div class="p-2"> 
+                        <form id="loginForm" class="user" method="post">
+                            <div class="form-group">
+                                <input type="email" name="email" class="form-control form-control-user"
+                                    id="email" aria-describedby="emailHelp"
+                                    placeholder="Digite seu Email..." required>
+                            </div>
+                            <div class="form-group">
+                                <input type="password" name="senha" class="form-control form-control-user"
+                                    id="senha" placeholder="Senha" required>
+                            </div>
+                            <div id="error-message" class="alert alert-danger d-none"></div>
+                            <button type="submit" class="btn btn-primary btn-user btn-block">
+                                Entrar
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap e Admin-2 (Carregados no final para evitar conflitos com DevExtreme) -->
+    <script src="<?= $this->basePath('vendor/bootstrap/js/bootstrap.bundle.min.js') ?>"></script>
+    <script src="<?= $this->basePath('vendor/jquery-easing/jquery.easing.min.js') ?>"></script>
+    <script src="<?= $this->basePath('js/sb-admin-2.min.js') ?>"></script>
+</body>
+
+<script>
+    $("#loginForm").on("submit", function(event) {
+        event.preventDefault();
+
+        let email = $("#email").val();
+        let senha = $("#senha").val();
+        let errorMessage = $("#error-message");
+
+        $.ajax({
+            url: '/login',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ email, senha }),
+            success: function(result) {
+                if (result.success) {
+                    localStorage.setItem('user', JSON.stringify(result.user));
+                    window.location.href = "/"; // Redireciona para a página inicial
+                } else {
+                    errorMessage.removeClass("d-none");
+                    errorMessage.text(result.message);
+                }
+            },
+            error: function() {
+                errorMessage.removeClass("d-none");
+                errorMessage.text("Ocorreu um erro ao tentar realizar o login.");
+            }
+        });
+    });
+</script>
+
+</html>

@@ -1,0 +1,174 @@
+
+/* Estilo para o cabeçalho da grid */
+.grid-personalizada .dx-header-row {
+    font-size: 12px; /* Tamanho da fonte do cabeçalho */
+    font-weight: bold; /* Peso da fonte do cabeçalho */
+}
+
+/* Estilo para o conteúdo da grid */
+.grid-personalizada .dx-data-row {
+    font-size: 11px !important; /* Tamanho da fonte do conteúdo */
+    height: 18px; /* Altura das células */
+}
+
+/* Ajuste da célula de edição para garantir que a altura seja adequada */
+.grid-personalizada .dx-editor-cell input {
+    height: 18px; /* Mantém a altura de 18px para o input */
+    padding: 3px; /* Remove qualquer padding adicional */
+    font-size: 11px !important; /* Certifique-se de que o tamanho da fonte do input é o desejado */
+    line-height: 18px; /* Alinha o texto verticalmente dentro do input */
+    box-sizing: border-box; /* Inclui o padding no cálculo da largura e altura */
+}
+
+/* Evita que a altura da célula se altere durante a edição */
+.grid-personalizada .dx-editor-cell {
+    height: 18px !important; /* Mantém a altura de 18px para a célula de edição */
+    line-height: 18px; /* Alinha o conteúdo verticalmente */
+}
+
+/* Estilo adicional para garantir que o layout não quebre */
+.grid-personalizada .dx-data-row > td {
+    line-height: 18px; /* Alinha o conteúdo verticalmente dentro da célula */
+    padding: 3px; /* Remove o padding desnecessário */
+    position: relative; /* Posicionamento relativo para que a div ocupe o mesmo tamanho */
+    height: 18px; /* Altura da célula para garantir o alinhamento */
+}
+
+/* Garantir que a div ocupe o mesmo tamanho da célula e o conteúdo seja centralizado */
+.grid-personalizada .dx-data-row > td .dx-highlight-outline {
+    display: flex; /* Flexbox para centralização */
+    justify-content: center; /* Alinha horizontalmente no centro */
+    align-items: center; /* Alinha verticalmente no centro */
+    width: 100%; /* Largura total da célula */
+    height: 100%; /* Altura total da célula */
+    box-sizing: border-box; /* Garante que o padding seja incluído no tamanho total */
+    text-align: center; /* Alinha o texto horizontalmente */
+    padding: 3px; /* Remove qualquer padding da div */
+    margin: 0; /* Remove qualquer margem */
+}
+
+/* Estilo para os totalizadores */
+.grid-personalizada .dx-datagrid-total-footer .dx-datagrid-summary-item {
+    font-size: 12px !important; /* Tamanho da fonte dos totalizadores */
+    font-weight: bold; /* Opcional, caso queira destacar o totalizador */
+    text-align: center; /* Alinha o texto ao centro */
+}
+
+/* Para ajustes em elementos específicos dentro dos totalizadores */
+.grid-personalizada .dx-datagrid-total-footer .dx-datagrid-summary-item div {
+    font-size: 12px !important; /* Tamanho da fonte para o valor dentro do totalizador */
+    font-weight: bold; /* Opcional, caso queira destacar o valor */
+    text-align: center; /* Alinha o texto ao centro */
+}
+
+
+
+
+
+
+
+
+
+
+
+.card-body {
+    display: flex;
+    flex-direction: column; /* Organiza os elementos na vertical */
+    gap: 20px; /* Espaçamento entre as linhas */
+    position: relative;
+}
+
+#form-container {
+    display: flex;
+    justify-content: space-between; /* Distribui o formulário e a legenda */
+    width: 100%;
+}
+
+#form-container > div:first-child {
+    flex: 9; /* O formulário ocupa 90% da linha */
+}
+
+.legend {
+    display: flex;
+    flex-direction: column;
+    font-size: 12px;
+    color: #555;
+    background-color: #fff;
+    padding: 5px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+    max-width: 150px;
+    align-self: flex-start; /* Mantém a legenda na linha ao lado do formulário */
+    flex: 1; /* A legenda ocupa 10% da linha */
+    margin-left: 10px; /* Adiciona um espaço entre o formulário e a legenda */
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.circle {
+    width: 16px;
+    height: 16px;
+    margin-right: 10px;
+    border-radius: 50%;
+}
+
+.vencidos {
+    background-color: #ffc1c1;
+}
+
+.futuros {
+    background-color: #C8E6F3;
+}
+
+.recebidos-total {
+    background-color: #C8E6C9;
+}
+
+.recebidos-parte {
+    background-color: #FFF9C4;
+}
+
+.bonificacao-desenvolvimento {
+    background-color: #ffd085;
+}
+.pago-sem-forma-pagamento {
+    background-color: #c9f5ed;
+}
+.pago-devolvido {
+    background-color: #D7BDE2; 
+}
+
+.legend span {
+    vertical-align: middle;
+}
+
+#gridContainer {
+    /* A grid ocupa a segunda linha */
+    width: 100%;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .legend {
+        max-width: 120px;
+    }
+
+    .card-body {
+        gap: 10px; /* Menor espaçamento em telas menores */
+    }
+
+    #form-container {
+        flex-direction: column; /* Empilha form e legenda em telas pequenas */
+    }
+}
+
+
+
+.hidden {
+    display: none;
+}

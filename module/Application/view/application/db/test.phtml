@@ -1,0 +1,23 @@
+<!-- Begin Page Content -->
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Teste Conexão com Banco de dados</h1>
+    </div>
+
+    <!-- Content Row -->
+    <div class="row">
+        <div class="col-lg-12 mb-4">
+            <!-- Approach -->
+            <div class="card shadow mb-4">
+                <div class="card-body">
+                    <p>Data Hora Banco Postgres: <?php echo $this->pg_error ? utf8_encode($this->pg_error) : $this->pg_time; ?></p>
+                    <p>Data Hora Banco Oracle: <?php echo $this->oracle_error ? utf8_encode($this->oracle_error) : $this->oracle_time; ?></p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+<!-- /.container-fluid -->
+

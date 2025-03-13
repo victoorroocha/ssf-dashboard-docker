@@ -1,0 +1,570 @@
+<!-- Begin Page Content -->
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Crédito e Cobrança</h1>
+    </div>
+
+    <!-- Content Row -->
+    <div class="row justify-content-center">
+        <div class="col-lg-12 mb-4">
+            <!-- Approach -->
+            <div class="card shadow mb-4" style="max-width: 90%; margin: 0 auto;">
+                <div class="card-body">
+                    <p>Envio Financeiro</p>
+
+                    <div id="form-container">
+                        <div id="form-filtro"></div> <!-- Seu formulário aqui -->
+                    </div>
+
+                    <!-- Grid Container for the DataGrid -->
+                    <div id="gridContainer" class="d-flex justify-content-center" style="width: 100%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- /.container-fluid -->
+
+<script>
+    $(document).ready(function() {
+
+        var filtros = {};  // Variável para armazenar os filtros globais
+        $("#form-filtro").dxForm({
+            formData: {
+                descricaoSafra: "",
+                codigosafra: null,
+                pagamento_inicio: null,
+                pagamento_fim: null,
+            },
+            items: [
+                {
+                    dataField: "codigosafra",
+                    label: { text: "Safra" },
+                    editorType: "dxSelectBox",
+                    editorOptions: {
+                        dataSource: new DevExpress.data.CustomStore({
+                            loadMode: "raw",
+                            load: function() {
+                                return $.ajax({
+                                    url: "/credito-e-cobranca/get-lookup-safra", // Ajuste para sua rota real
+                                    method: "GET",
+                                    dataType: "json"
+                                }).then(response => {
+                                    if (response.success) {
+                                        return response.data;
+                                    } else {
+                                        DevExpress.ui.notify(response.message, "error", 3000);
+                                        return [];
+                                    }
+                                }).catch(error => {
+                                    if (error.responseJSON) {
+                                        DevExpress.ui.notify(error.responseJSON.message, "error", 3000);
+                                        return {};
+                                    } else {
+                                        DevExpress.ui.notify("Erro ao buscar safras!", "error", 3000);
+                                        return [];
+                                    }
+                                });
+                            }
+                        }),
+                        displayExpr: "dsc", 
+                        valueExpr: "codigosafra", 
+                        placeholder: "Selecione a safra",
+                        searchEnabled: true,
+                        isRequired: true // Marca como obrigatório
+                    },
+                    isRequired: false,
+                    colSpan: 2 // Ocupa toda a linha
+                },
+                {
+                    itemType: "group",
+                    colCount: 2, // Duas colunas para as datas ficarem lado a lado
+                    items: [
+                        {
+                            dataField: "pagamento_inicio",
+                            label: { text: "Período Pagamentos" },
+                            editorType: "dxDateBox",
+                            editorOptions: {
+                                displayFormat: "dd/MM/yyyy", 
+                                dateSerializationFormat: "yyyy-MM-dd"
+                            },
+                            isRequired: true,
+                        },
+                        {
+                            dataField: "pagamento_fim",
+                            label: { text: "Até" },
+                            editorType: "dxDateBox",
+                            editorOptions: {
+                                displayFormat: "dd/MM/yyyy", 
+                                dateSerializationFormat: "yyyy-MM-dd"
+                            },
+                        },
+                        
+                    ]
+                },
+                {
+                    itemType: "button",
+                    horizontalAlignment: "left",
+                    buttonOptions: {
+                        text: "Filtrar",
+                        type: "success",
+                        onClick: function () {
+                            // Instância do formulário
+                            var formInstance = $("#form-filtro").dxForm("instance");
+
+                            
+                            // Validação do formulário
+                            var validationResult = formInstance.validate();  // Valida o formulário
+
+                            // Verifica se o formulário é válido
+                            if (validationResult.isValid) {
+                                // Se o formulário for válido, captura os dados
+                                var formData = formInstance.option("formData");
+
+                                var selectBox = formInstance.getEditor("codigosafra");
+                                var descricaoSafra = selectBox ? selectBox.option("displayValue") : "";
+
+                                // Atualiza a variável de filtros
+                                filtros = {
+                                    descricaoSafra: descricaoSafra,
+                                    codigosafra: formData.codigosafra,
+                                    pagamento_inicio: formData.pagamento_inicio,
+                                    pagamento_fim: formData.pagamento_fim
+                                };
+                                
+                                // Realize a ação de filtrar, como enviar uma requisição
+                                let dataGrid = $('#gridContainer').dxDataGrid({
+                                    dataSource: new DevExpress.data.CustomStore({
+                                        // key: 'ID_CONTROLE_RECEBIMENTO',
+                                        load: function(loadOptions) {
+                                            return $.ajax({
+                                                url: '/credito-e-cobranca/list-controle-recebimento-envio-financeiro',
+                                                method: 'GET',
+                                                dataType: 'json',
+                                                data: filtros,  // Passa os filtros armazenados na variável global
+                                            }).then(response => {
+                                                if (response.success) {
+                                                    return response.data;
+                                                } else {
+                                                    DevExpress.ui.notify(response.message, "error", 3000);
+                                                    return [];
+                                                }
+                                            }).catch(error => {
+                                                if (error.responseJSON) {
+                                                    DevExpress.ui.notify(error.responseJSON.message, "error", 3000);
+                                                    return {};
+                                                } else {
+                                                    DevExpress.ui.notify("Erro ao buscar dados!", "error", 3000);
+                                                    return {};
+                                                }
+                                            });
+                                        },
+                                    }),
+                                    height: 550,
+                                    width: '100%',
+                                    columnAutoWidth: true,
+                                    elementAttr: {
+                                        class: "grid-personalizada"
+                                    },
+                                    // keyExpr: 'id_controle_recebimento',  // Define qual campo é a chave única
+                                    showBorders: true,
+                                    columnChooser: {
+                                        enabled: true,
+                                        mode: "dragAndDrop", // or "select"
+                                        position: { 
+                                            my: "right", 
+                                            at: "right", 
+                                            of: ".dx-datagrid-column-chooser-button" 
+                                        }
+                                    },
+                                    groupPanel: {
+                                        visible: true,
+                                    },
+                                    toolbar: {
+                                        items: [
+                                            {
+                                                name: "refresh", // Define o nome do botão
+                                                location: "after", // Coloca o botão após os outros itens na toolbar
+                                                widget: "dxButton",
+                                                options: {
+                                                    icon: "refresh", // Ícone de refresh
+                                                    onClick: function() {
+                                                        // Lógica para atualizar/recarregar os dados da grid
+                                                        $("#gridContainer").dxDataGrid("instance").refresh(); // Atualiza a grid
+                                                    },
+                                                    text: "Atualizar" // Texto exibido no botão
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    editing: {
+                                        mode: 'batch',    // Modo de edição em lote
+                                        allowUpdating: false,
+                                        selectTextOnEditStart: true,
+                                        startEditAction: 'click',  // A edição começa ao clicar
+                                    },
+                                    selection: {
+                                        mode: 'multiple',
+                                        showCheckBoxesMode: 'none'
+                                    },
+                                    hoverStateEnabled: true,
+                                    pager: {
+                                        visible: false
+                                    },
+                                    paging: {
+                                        enabled: false
+                                    },
+                                    headerFilter: {
+                                        visible: true,
+                                    },
+                                    filterRow: {
+                                        visible: true,
+                                        applyFilter: 'auto',
+                                    },
+                                    export: {
+                                        enabled: true,
+                                        fileName: "Pagamentos Financeiro",
+                                        allowExportSelectedData: false,
+                                    },
+                                    searchPanel: {
+                                        visible: true,
+                                        width: 240,
+                                        placeholder: 'Procure...',
+                                    },
+                                    columns: [
+                                        {
+                                            caption: "RECEBIMENTO DE PEDIDOS EM REAIS " + (filtros.descricaoSafra ? ("- SAFRA " + filtros.descricaoSafra) : ""), // Cabeçalho mesclado
+                                            alignment: "center",
+                                            columns: [ // Agrupa todas as colunas dentro desse cabeçalho
+                                                { dataField: 'codigo', caption: 'N° Pedido', allowEditing: false, alignment: 'center', width: 110, sortOder: 'asc' },
+                                                { dataField: 'numero_parcela', caption: 'Parcela', allowEditing: false, alignment: 'center', width: 60, sortOder: 'asc' },
+                                                { dataField: 'cliente_id', caption: 'Cliente ID', allowEditing: false, width: 110, alignment: 'center', sortOder: 'asc' },
+                                                { dataField: 'nome_cliente', caption: 'Cliente', allowEditing: false },
+                                                { dataField: 'custom_forma_pgto', caption: 'Forma de Pgto', allowEditing: false, width: 110, alignment: 'center' },
+                                                { 
+                                                    dataField: 'data_pagamento', 
+                                                    caption: 'Data Pagamento', 
+                                                    allowEditing: false, 
+                                                    alignment: 'center', 
+                                                    width: 130, 
+                                                    dataType: 'date', 
+                                                    format: 'dd/MM/yyyy',
+                                                    sortOder: 'desc'
+                                                },
+                                                { 
+                                                    dataField: 'valor_recebido', 
+                                                    caption: 'Valor Total', 
+                                                    allowEditing: false, 
+                                                    alignment: 'right', 
+                                                    width: 150, 
+                                                    dataType: 'number', 
+                                                    format: { type: 'currency', currency: 'BRL', precision: 2 },
+                                                    customizeText: function(cellInfo) {
+                                                        if (cellInfo.value !== undefined && cellInfo.value !== null) {
+                                                            var numericValue = Number(cellInfo.value);
+                                                            if (isNaN(numericValue)) {
+                                                                return cellInfo.value;
+                                                            }
+                                                            return numericValue.toLocaleString("pt-BR", {
+                                                                style: "currency",
+                                                                currency: "BRL",
+                                                                minimumFractionDigits: 2,
+                                                                maximumFractionDigits: 2
+                                                            });
+                                                        }
+                                                    }  
+                                                },
+
+
+                                                //Colunas ocultas
+                                                { 
+                                                    dataField: 'recebido_germoplasma', 
+                                                    caption: 'Recebido Germoplasma', 
+                                                    allowEditing: false, 
+                                                    visible: false,
+                                                    alignment: 'right', 
+                                                    width: 150, 
+                                                    dataType: 'number', 
+                                                    format: { type: 'currency', currency: 'BRL', precision: 2 },
+                                                    customizeText: function(cellInfo) {
+                                                        if (cellInfo.value !== undefined && cellInfo.value !== null) {
+                                                            var numericValue = Number(cellInfo.value);
+                                                            if (isNaN(numericValue)) {
+                                                                return cellInfo.value;
+                                                            }
+                                                            return numericValue.toLocaleString("pt-BR", {
+                                                                style: "currency",
+                                                                currency: "BRL",
+                                                                minimumFractionDigits: 2,
+                                                                maximumFractionDigits: 2
+                                                            });
+                                                        }
+                                                    }  
+                                                },
+                                                { 
+                                                    dataField: 'recebido_royalties', 
+                                                    caption: 'Recebido Royalties', 
+                                                    allowEditing: false, 
+                                                    visible: false,
+                                                    alignment: 'right', 
+                                                    width: 150, 
+                                                    dataType: 'number', 
+                                                    format: { type: 'currency', currency: 'BRL', precision: 2 },
+                                                    customizeText: function(cellInfo) {
+                                                        if (cellInfo.value !== undefined && cellInfo.value !== null) {
+                                                            var numericValue = Number(cellInfo.value);
+                                                            if (isNaN(numericValue)) {
+                                                                return cellInfo.value;
+                                                            }
+                                                            return numericValue.toLocaleString("pt-BR", {
+                                                                style: "currency",
+                                                                currency: "BRL",
+                                                                minimumFractionDigits: 2,
+                                                                maximumFractionDigits: 2
+                                                            });
+                                                        }
+                                                    }  
+                                                },
+                                                { 
+                                                    dataField: 'recebido_tsi', 
+                                                    caption: 'Recebido TSI', 
+                                                    allowEditing: false, 
+                                                    visible: false,
+                                                    alignment: 'right', 
+                                                    width: 150, 
+                                                    dataType: 'number', 
+                                                    format: { type: 'currency', currency: 'BRL', precision: 2 },
+                                                    customizeText: function(cellInfo) {
+                                                        if (cellInfo.value !== undefined && cellInfo.value !== null) {
+                                                            var numericValue = Number(cellInfo.value);
+                                                            if (isNaN(numericValue)) {
+                                                                return cellInfo.value;
+                                                            }
+                                                            return numericValue.toLocaleString("pt-BR", {
+                                                                style: "currency",
+                                                                currency: "BRL",
+                                                                minimumFractionDigits: 2,
+                                                                maximumFractionDigits: 2
+                                                            });
+                                                        }
+                                                    }  
+                                                },
+                                                { 
+                                                    dataField: 'recebido_frete', 
+                                                    caption: 'Recebido Frete', 
+                                                    allowEditing: false, 
+                                                    visible: false,
+                                                    alignment: 'right', 
+                                                    width: 150, 
+                                                    dataType: 'number', 
+                                                    format: { type: 'currency', currency: 'BRL', precision: 2 },
+                                                    customizeText: function(cellInfo) {
+                                                        if (cellInfo.value !== undefined && cellInfo.value !== null) {
+                                                            var numericValue = Number(cellInfo.value);
+                                                            if (isNaN(numericValue)) {
+                                                                return cellInfo.value;
+                                                            }
+                                                            return numericValue.toLocaleString("pt-BR", {
+                                                                style: "currency",
+                                                                currency: "BRL",
+                                                                minimumFractionDigits: 2,
+                                                                maximumFractionDigits: 2
+                                                            });
+                                                        }
+                                                    }  
+                                                },
+                                                { dataField: 'nome_vendedor', caption: 'Vendedor', allowEditing: false, visible: false },
+                                                { dataField: 'nome_agente', caption: 'Agente', allowEditing: false, visible: false },
+                                                { dataField: 'nome_grupo_compra', caption: 'Grupo Compras', allowEditing: false, visible: false },
+                                                { dataField: 'tipo_parcela', caption: 'Tipo Parcela', allowEditing: false, visible: false },
+                                                { dataField: 'tipo_frete', caption: 'Tipo Frete', allowEditing: false, visible: false },
+                                            ]
+                                        }
+                                    ],
+                                    summary: {
+                                        totalItems: [
+                                            {
+                                                column: "valor_recebido", 
+                                                summaryType: "sum",
+                                                displayFormat: "Total: {0}",  
+                                                valueFormat: {
+                                                    type: "currency",  
+                                                    currency: "BRL" 
+                                                },
+                                                customizeText: function(cellInfo) {
+                                                    if (cellInfo.value !== undefined && cellInfo.value !== null) {
+                                                        var numericValue = Number(cellInfo.value);
+                                                        if (isNaN(numericValue)) {
+                                                            return cellInfo.value;
+                                                        }
+                                                        return numericValue.toLocaleString("pt-BR", {
+                                                            style: "currency",
+                                                            currency: "BRL",
+                                                            minimumFractionDigits: 2,
+                                                            maximumFractionDigits: 2
+                                                        });
+                                                    }
+                                                }  
+                                            },
+                                           
+                                        ],
+                                        groupItems: [
+                                            {
+                                                column: 'valor_recebido',
+                                                summaryType: 'sum',
+                                                valueFormat: 'currency',
+                                                displayFormat: 'Total: {0}',
+                                                showInGroupFooter: true,
+                                                valueFormat: {
+                                                    type: "currency",  
+                                                    currency: "BRL" 
+                                                },
+                                                customizeText: function(cellInfo) {
+                                                    if (cellInfo.value !== undefined && cellInfo.value !== null) {
+                                                        var numericValue = Number(cellInfo.value);
+                                                        if (isNaN(numericValue)) {
+                                                            return cellInfo.value;
+                                                        }
+                                                        return numericValue.toLocaleString("pt-BR", {
+                                                            style: "currency",
+                                                            currency: "BRL",
+                                                            minimumFractionDigits: 2,
+                                                            maximumFractionDigits: 2
+                                                        });
+                                                    }
+                                                }  
+                                            },
+                                        ],
+
+                                    },
+                                    onExporting: function(e) {
+                                        if (typeof ExcelJS === "undefined") {
+                                            console.error("ExcelJS não está carregado. Verifique a importação do script.");
+                                            return;
+                                        }
+                                        var workbook = new ExcelJS.Workbook();
+                                        var worksheet = workbook.addWorksheet("Pagamentos Financeiro");
+
+                                        DevExpress.excelExporter.exportDataGrid({
+                                            component: e.component,
+                                            worksheet: worksheet,
+                                            customizeCell: function(options) {
+                                                var { gridCell, excelCell } = options;
+
+                                                // Personaliza o título principal (linha do grupo no header)
+                                                if (gridCell.rowType === "header" && gridCell.columnIndex === 0) {
+                                                    excelCell.font = { bold: true, color: { argb: "FFFFFF" } }; // Texto branco
+                                                    excelCell.fill = {
+                                                        type: "pattern",
+                                                        pattern: "solid",
+                                                        fgColor: { argb: "4F81BD" } // Azul (mesmo do subtotal original)
+                                                    };
+                                                }
+                                                
+                                                // Personaliza o cabeçalho abaixo do título
+                                                if (gridCell.rowType === "header" && gridCell.columnIndex !== 0) {
+                                                    excelCell.font = { bold: true, color: { argb: "FFFFFF" } }; // Texto branco
+                                                    excelCell.fill = {
+                                                        type: "pattern",
+                                                        pattern: "solid",
+                                                        fgColor: { argb: "000000" } // Fundo preto
+                                                    };
+                                                }
+
+                                                // Personaliza o corpo da tabela
+                                                if (gridCell.rowType === "data") {
+                                                    excelCell.font = { color: { argb: "000000" } }; // Texto preto
+                                                    excelCell.fill = {
+                                                        type: "pattern",
+                                                        pattern: "solid",
+                                                        fgColor: { argb: "FFFFFF" } // Fundo branco
+                                                    };
+                                                }
+
+                                                // Converte a coluna "valor_recebido" para número (float)
+                                                if (gridCell.column.dataField === "valor_recebido" && gridCell.rowType === "data") {
+                                                    excelCell.numFmt = "R$ #,##0.00"; // Formato de moeda brasileira
+                                                    excelCell.value = parseFloat(gridCell.value) || 0; // Converte para float
+                                                }
+
+                                                // Converte o valor do subtotal para número (float)
+                                                if (gridCell.rowType === "groupFooter" || gridCell.rowType === "totalFooter") {
+                                                    if (gridCell.column.dataField === "valor_recebido") {
+                                                        excelCell.numFmt = "R$ #,##0.00"; // Formato de moeda brasileira
+                                                        excelCell.value = parseFloat(gridCell.value) || 0; // Converte para float
+                                                    }
+                                                }
+
+                                                // Personaliza a linha de subtotal
+                                                if (gridCell.rowType === "groupFooter") {
+                                                    excelCell.font = { bold: true, color: { argb: "000000" } }; // Texto preto
+                                                    excelCell.fill = {
+                                                        type: "pattern",
+                                                        pattern: "solid",
+                                                        fgColor: { argb: "D9D9D9" } // Cinza claro
+                                                    };
+                                                }
+
+                                                // Personaliza a linha de total geral
+                                                if (gridCell.rowType === "totalFooter") {
+                                                    excelCell.font = { bold: true, color: { argb: "000000" } }; // Texto preto
+                                                    excelCell.fill = {
+                                                        type: "pattern",
+                                                        pattern: "solid",
+                                                        fgColor: { argb: "D9D9D9" } // Cinza claro (igual ao subtotal)
+                                                    };
+                                                }
+                                            }
+                                        }).then(function() {
+                                            workbook.xlsx.writeBuffer().then(function(buffer) {
+                                                saveAs(new Blob([buffer], { type: "application/octet-stream" }), "Pagamentos_Financeiro.xlsx");
+                                            });
+                                        });
+
+                                        e.cancel = true; // Impede o download automático sem personalização
+                                    },
+                                    onToolbarPreparing: function (e) {
+                                        // Aqui você pode personalizar ainda mais a barra de ferramentas
+                                        var toolbarItems = e.toolbarOptions.items;
+                                        e.toolbarOptions.items.push({
+                                            name: "refresh", // Adiciona o botão refresh na toolbar
+                                            location: "after", // Coloca depois dos outros itens
+                                            widget: "dxButton",
+                                            options: {
+                                                icon: "refresh", // Ícone do botão (ícone de atualização)
+                                                onClick: function() {
+                                                    // Recarrega os dados da grid
+                                                    e.component.refresh(); // Atualiza a grid
+                                                },
+                                                text: "Atualizar" 
+                                            }
+                                        });
+                                    }
+                                }).dxDataGrid('instance');
+                            } else {
+                                // Se o formulário for inválido
+                                DevExpress.ui.notify("Há campos obrigatórios! Por favor, corrija os erros de validação.", "error", 3000);
+                            }
+                        }
+                    }
+                }
+            ]
+        });
+    });
+    
+    // Função para formatar a data
+    function formatarData(data) {
+        const date = new Date(data);
+        const dia = ('0' + date.getDate()).slice(-2);
+        const mes = ('0' + (date.getMonth() + 1)).slice(-2);
+        const ano = date.getFullYear();
+        return `${dia}/${mes}/${ano}`;
+    }
+
+
+    
+
+</script>

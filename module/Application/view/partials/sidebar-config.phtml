@@ -1,0 +1,101 @@
+<style>
+
+.custom-icon {
+    width: 50px; /* Ajuste o tamanho do ícone */
+    height: 50px; /* Ajuste o tamanho do ícone */
+    background-color: white; /* Define a cor branca para a imagem */
+    -webkit-mask-image: url('<?= $this->basePath('img/icone_ssf.png') ?>'); /* Caminho da sua imagem */
+    mask-image: url('<?= $this->basePath('img/icone_ssf.png') ?>'); /* Caminho da sua imagem */
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    background-size: contain;
+}
+</style>
+
+<?php
+    // Obtém a URL atual para verificar os links ativos
+    $current_url = $_SERVER['REQUEST_URI'];
+
+    $menu_groups = $this->menus ?? []; 
+
+?>
+
+<!-- Sidebar -->
+<ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+
+    <!-- Sidebar - Brand -->
+    <a class="sidebar-brand d-flex align-items-center justify-content-center" href="/">
+        <div class="sidebar-brand-icon">
+            <i class="custom-icon fas"></i>
+        </div>
+        <div class="sidebar-brand-text" style="font-size: 0.7rem;">Sementes São Francisco</div>
+    </a>
+
+    <!-- Divider -->
+    <hr class="sidebar-divider my-0">
+
+    <!-- Nav Item - Dashboard -->
+    <li class="nav-item <?= $current_url === '/' ? 'active' : '' ?>">
+        <a class="nav-link" href="/">
+            <i class="fas fa-fw fa-tachometer-alt"></i>
+            <span>Dashboard</span>
+        </a>
+    </li>
+
+    <?php foreach ($menu_groups as $group_index => $group): ?>
+        <!-- Divider -->
+        <hr class="sidebar-divider">
+
+        <!-- Heading -->
+        <div class="sidebar-heading">
+            <?php echo $group['label']; ?>
+        </div>
+
+        <?php foreach ($group['subitems'] as $subitem_index => $subitem): ?>
+            <?php
+                // Verifica se algum subsubitem está ativo para expandir o menu
+                $is_submenu_active = false;
+                foreach ($subitem['subsubitems'] as $subsubitem) {
+                    if ($current_url === $subsubitem['link']) {
+                        $is_submenu_active = true;
+                        break;
+                    }
+                }
+            ?>
+
+            <!-- Nav Item - Pages Collapse Menu -->
+            <li class="nav-item <?= $is_submenu_active ? 'active' : '' ?>">
+                <a class="nav-link collapsed" href="#" data-toggle="collapse" 
+                    data-target="#collapse<?php echo $group_index; ?>-<?php echo $subitem_index; ?>"
+                    aria-expanded="<?= $is_submenu_active ? 'true' : 'false' ?>"
+                    aria-controls="collapse<?php echo $group_index; ?>-<?php echo $subitem_index; ?>">
+                    <i class="<?php echo $subitem['icon']; ?>"></i>
+                    <span><?php echo $subitem['label']; ?></span>
+                </a>
+                <div id="collapse<?php echo $group_index; ?>-<?php echo $subitem_index; ?>" 
+                    class="collapse <?= $is_submenu_active ? 'show' : '' ?>" 
+                    aria-labelledby="heading<?php echo $group_index; ?>-<?php echo $subitem_index; ?>" 
+                    data-parent="#accordionSidebar">
+                    <div class="bg-white py-2 collapse-inner rounded">
+                        <?php foreach ($subitem['subsubitems'] as $subsubitem): ?>
+                            <a class="collapse-item <?= $current_url === $subsubitem['link'] ? 'active' : '' ?>" 
+                                href="<?php echo $subsubitem['link']; ?>">
+                                <?php echo $subsubitem['label']; ?>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </li>
+        <?php endforeach; ?>
+    <?php endforeach; ?>
+
+    <!-- Divider -->
+    <hr class="sidebar-divider d-none d-md-block">
+
+
+    <!-- Sidebar Toggler (Sidebar) -->
+    <div class="text-center d-none d-md-inline">
+        <button class="rounded-circle border-0" id="sidebarToggle"></button>
+    </div>
+</ul>
+<!-- End of Sidebar -->

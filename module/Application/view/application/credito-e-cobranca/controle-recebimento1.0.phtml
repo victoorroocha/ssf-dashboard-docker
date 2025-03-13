@@ -1,0 +1,691 @@
+
+<!-- Begin Page Content -->
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Controle Recebimento</h1>
+    </div>
+
+    <!-- Content Row -->
+    <div class="row">
+        <div class="col-lg-12 mb-4">
+            <!-- Approach -->
+            <div class="card shadow mb-4">
+                <div class="card-body">
+                    <p>Controle Recebimento</p>
+
+                    <!-- Grid Container for the DataGrid -->
+                    <div id="gridContainer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /.container-fluid -->
+
+<script>
+    $(document).ready(function() {
+        var pedidosDataSource = new DevExpress.data.CustomStore({
+            key: "codigo",
+            load: function(loadOptions) {
+                if (loadOptions.searchValue && loadOptions.searchValue.length >= 3) {
+                    return $.ajax({
+                        url: '/credito-e-cobranca/get-lookup-pedidos',
+                        type: "GET",
+                        dataType: "json",
+                        data: { filtro: loadOptions.searchValue }, 
+                        success: function(data) {
+                            console.log('Pedidos retornados:', data);
+                        },
+                        error: function() {
+                            console.log("Erro ao carregar pedidos.");
+                        }
+                    });
+                } else {
+                    return [];  
+                }
+            },
+            byKey: function(key) {
+                return $.ajax({
+                    url: '/credito-e-cobranca/get-lookup-pedidos', 
+                    type: "GET",
+                    dataType: "json",
+                    data: { codigo: key }
+                }).fail(function() {
+                    console.log("Erro ao buscar pedido por código.");
+                });
+            }
+        });
+
+        var pedido = {
+            custom_codigo: null,
+            custom_vencimento_parcela: null
+        };
+
+        const dataGrid = $('#gridContainer').dxDataGrid({
+            dataSource: new DevExpress.data.CustomStore({
+                key: 'id_controle_recebimento',
+                load: function() {
+                    return $.ajax({
+                        url: '/credito-e-cobranca/list-controle-recebimento',  // Chama a ação para carregar os dados via AJAX
+                        method: 'GET',
+                        dataType: 'json'
+                    }).then(response => {
+                        if (response.success) {
+                            return response.data;  // Retorna os dados da resposta JSON
+                        } else {
+                            DevExpress.ui.notify(response.message, "error", 3000);  // Exibe mensagem de erro se falhar
+                            return [];
+                        }
+                    }).catch(error => {
+                        DevExpress.ui.notify("Erro ao buscar dados!", "error", 3000);  // Exibe erro geral
+                        return [];
+                    });
+                },
+                insert: function(values) {
+                    return $.ajax({
+                        url: '/credito-e-cobranca/save-controle-recebimento',  // Rota para salvar os dados
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(values),
+                        dataType: 'json'
+                    }).then(response => {
+                        if (!response.success) {
+                            DevExpress.ui.notify(response.message, "error", 3000);
+                        } else {
+                            DevExpress.ui.notify(response.message, "success", 3000);
+                        }
+                        return response;
+                    }).catch(error => {
+                        DevExpress.ui.notify("Erro ao salvar dados!", "error", 3000);
+                        return {};
+                    });
+                },
+                update: function(key, values) {
+                    return $.ajax({
+                        url: '/credito-e-cobranca/save-controle-recebimento',  // Rota para atualizar os dados
+                        method: 'PUT',
+                        contentType: 'application/json',
+                        data: JSON.stringify(values),  // Enviar todos os dados da linha, incluindo as edições
+                        dataType: 'json'
+                    }).then(response => {
+                        if (!response.success) {
+                            DevExpress.ui.notify(response.message, "error", 3000);
+                        } else {
+                            DevExpress.ui.notify(response.message, "success", 3000);
+                        }
+                        return response;
+                    }).catch(error => {
+                        DevExpress.ui.notify("Erro ao atualizar dados!", "error", 3000);
+                        return {};
+                    });
+                },
+                remove: function(key) {
+                    return $.ajax({
+                        url: '/credito-e-cobranca/delete-controle-recebimento', // Rota para deletar os dados
+                        method: 'DELETE',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ id_controle_recebimento: key }), // Envia o ID do item a ser excluído
+                        dataType: 'json'
+                    }).then(response => {
+                        if (!response.success) {
+                            DevExpress.ui.notify(response.message, "error", 3000);
+                        } else {
+                            DevExpress.ui.notify(response.message, "success", 3000);
+                        }
+                        
+                        return response;
+                    }).catch(error => {
+                        DevExpress.ui.notify("Erro ao excluir dados!", "error", 3000);
+                        return {};
+                    });
+                }
+            }),
+            height: 700,
+            width: '100%',
+            columnAutoWidth: true,
+            elementAttr: {
+                class: "grid-personalizada"
+            },
+            keyExpr: 'id_controle_recebimento', 
+            showBorders: true,
+            columnChooser: {
+                enabled: true,
+                mode: "dragAndDrop", // or "select"
+                position: { 
+                    my: "right", 
+                    at: "right", 
+                    of: ".dx-datagrid-column-chooser-button" 
+                }
+            },
+            groupPanel: {
+                visible: true,
+            },
+            toolbar: {
+                items: [
+                    {
+                        location: "after",
+                        widget: "dxButton",
+                        options: {
+                            icon: "fa fa-expand", // ícone para expandir
+                            text: "Expandir todos",
+                            onClick: function () {
+                                var grid = $("#gridContainer").dxDataGrid("instance");
+                                grid.expandAll(); // Expande todos os grupos
+                            }
+                        }
+                    },
+                    {
+                        location: "after",
+                        widget: "dxButton",
+                        options: {
+                            icon: "fa fa-compress", // ícone para colapsar
+                            text: "Colapsar todos",
+                            onClick: function () {
+                                var grid = $("#gridContainer").dxDataGrid("instance");
+                                grid.collapseAll(); // Colapsa todos os grupos
+                            }
+                        }
+                    },
+                    {
+                        name: "refresh", // Define o nome do botão
+                        location: "after", // Coloca o botão após os outros itens na toolbar
+                        widget: "dxButton",
+                        options: {
+                            icon: "refresh", // Ícone de refresh
+                            onClick: function() {
+                                // Lógica para atualizar/recarregar os dados da grid
+                                $("#gridContainer").dxDataGrid("instance").refresh(); // Atualiza a grid
+                            },
+                            text: "Atualizar Informações" // Texto exibido no botão
+                        }
+                    }
+                ]
+            },
+            editing: {
+                mode: 'batch',
+                useIcons: true,
+                allowUpdating: true,
+                allowAdding: true,
+                allowDeleting: true,
+                selectTextOnEditStart: true,
+                startEditAction: 'click', 
+            },
+            pager: {
+                visible: false
+            },
+            paging: {
+                enabled: false
+            },
+            headerFilter: {
+                visible: true,
+            },
+            searchPanel: {
+                visible: true,
+                width: 240,
+                placeholder: 'Procure...',
+            },
+            columns: [
+                // Visiveis
+                {
+                    dataField: 'custom_codigo',
+                    caption: 'Pedido',
+                    allowEditing: true,
+                    alignment: 'center',
+                    width: 100,
+                    validationRules: [{
+                        type: "required",
+                        message: "O codigo do pedido é obrigatório"
+                    }]
+                    // lookup: {
+                    //     dataSource: pedidosDataSource,
+                    //     displayExpr: "codigo",
+                    //     valueExpr: "codigo"
+                    // },
+                    // editorOptions: {
+                    //     searchEnabled: true,
+                    //     minSearchLength: 8,
+                    // }
+                },
+                { 
+                    dataField: 'custom_vencimento_parcela', 
+                    caption: 'Data Vencimento Parcela', 
+                    allowEditing: true, 
+                    alignment: 'center', 
+                    width: 150, 
+                    dataType: "date", 
+                    editorOptions: {
+                        type: 'date',
+                        displayFormat: 'dd/MM/yyyy', 
+                    },
+                    validationRules: [{
+                        type: "required",
+                        message: "Data de vencimento da parcela é obrigatória!"
+                    }],
+                    customizeText: function(cellInfo) {
+                        if (cellInfo.value !== undefined && cellInfo.value !== null) {
+                            var date = new Date(cellInfo.value);
+                            return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                        }
+                    }
+                },
+                { dataField: 'id', caption: 'ID', allowEditing: false, alignment: 'center', width: 65
+                },
+                { dataField: 'nome_cliente', caption: 'Cliente', allowEditing: false, width: 300
+                },
+                { 
+                    dataField: 'custom_forma_pgto', 
+                    caption: 'Forma de Pgto', 
+                    allowEditing: true, 
+                    alignment: 'center', 
+                    width: 150,  
+                    lookup: {
+                        dataSource: [
+                            "BOLETO",
+                            "PIX BB",
+                            "PIX ITAÚ",
+                            "TED SICOOB",
+                            "PIX SICOOB",
+                            "TED SANTANDER",
+                            "CRED. ADIANT.",
+                            "CRED. DEVOLUÇÃO",
+                            "FIXAÇÃO DE SOJA",
+                            "PERMUTA",
+                            "NÃO PAGO",
+                            "DEVOLVEU",
+                            "CHEQUE"
+                        ],
+                        displayExpr: "this",
+                        valueExpr: "this"
+                    }
+                },
+                { dataField: 'custom_parc', caption: 'Parcela', allowEditing: true, alignment: 'center', width: 90, dataType: 'number' },
+                { 
+                    dataField: 'custom_data_pagamento', 
+                    caption: 'Data Pagamento', 
+                    allowEditing: true, 
+                    alignment: 'center', 
+                    width: 150, 
+                    dataType: "date",
+                    sortOrder: 'desc', 
+                    editorOptions: {
+                        type: 'date',
+                        displayFormat: 'dd/MM/yyyy', 
+                    },
+                    customizeText: function(cellInfo) {
+                        if (cellInfo.value !== undefined && cellInfo.value !== null) {
+                            var date = new Date(cellInfo.value);
+                            return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                        }
+                    }
+                },
+                { 
+                    dataField: 'custom_valor_recebido', 
+                    caption: 'Vlr Total Recebido', 
+                    allowEditing: true, 
+                    alignment: 'center', 
+                    width: 160, 
+                    dataType: 'number',
+                    format: { type: 'currency', currency: 'BRL', precision: 2 }, 
+                    customizeText: function(cellInfo) {
+                        if (cellInfo.value !== undefined && cellInfo.value !== null) {
+                            var numericValue = Number(cellInfo.value);
+                            if (isNaN(numericValue)) {
+                                return cellInfo.value;
+                            }
+                            return numericValue.toLocaleString("pt-BR", {
+                                style: "currency",
+                                currency: "BRL",
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            });
+                        }
+                    }
+                },
+                { 
+                    dataField: 'custom_vencimento_boleto', 
+                    caption: 'Venc. Boleto', 
+                    allowEditing: true, 
+                    alignment: 'center', 
+                    width: 130, 
+                    dataType: 'date', 
+                    editorOptions: {
+                        type: 'date',
+                        displayFormat: 'dd/MM/yyyy',
+                    },
+                    customizeText: function(cellInfo) {
+                        if (cellInfo.value !== undefined && cellInfo.value !== null) {
+                            var date = new Date(cellInfo.value);
+                            return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                        }
+                    }
+                },
+                { 
+                    dataField: 'custom_juros', 
+                    caption: 'Juros', 
+                    allowEditing: true, 
+                    alignment: 'center',
+                    width: 110, 
+                    dataType: 'number', 
+                    format: { type: 'currency', currency: 'BRL', precision: 2 },
+                    customizeText: function(cellInfo) {
+                        if (cellInfo.value !== undefined && cellInfo.value !== null) {
+                            var numericValue = Number(cellInfo.value);
+                            if (isNaN(numericValue)) {
+                                return cellInfo.value;
+                            }
+                            return numericValue.toLocaleString("pt-BR", {
+                                style: "currency",
+                                currency: "BRL",
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            });
+                        }
+                    }
+                },
+                { 
+                    dataField: 'custom_desconto', 
+                    caption: 'Desconto', 
+                    allowEditing: true, 
+                    alignment: 'center', 
+                    width: 110, 
+                    dataType: 'number', 
+                    format: { type: 'currency', currency: 'BRL', precision: 2 },
+                    customizeText: function(cellInfo) {
+                        if (cellInfo.value !== undefined && cellInfo.value !== null) {
+                            var numericValue = Number(cellInfo.value);
+                            if (isNaN(numericValue)) {
+                                return cellInfo.value;
+                            }
+                            return numericValue.toLocaleString("pt-BR", {
+                                style: "currency",
+                                currency: "BRL",
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            });
+                        }
+                    }
+                },
+                { 
+                    dataField: 'custom_valor_devolvido', 
+                    caption: 'Vlr. Devolvido', 
+                    allowEditing: true, 
+                    alignment: 'center', 
+                    width: 150, 
+                    dataType: 'number', 
+                    format: { type: 'currency', currency: 'BRL', precision: 2 },
+                    customizeText: function(cellInfo) {
+                        if (cellInfo.value !== undefined && cellInfo.value !== null) {
+                            var numericValue = Number(cellInfo.value);
+                            if (isNaN(numericValue)) {
+                                return cellInfo.value;
+                            }
+                            return numericValue.toLocaleString("pt-BR", {
+                                style: "currency",
+                                currency: "BRL",
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            });
+                        }
+                    }
+                },
+                {
+                    dataField: 'custom_valor_liquido', 
+                    caption: 'Valor Líquido', 
+                    allowEditing: false, 
+                    alignment: 'center', 
+                    width: 150, 
+                    dataType: 'number', 
+                    format: { 
+                        type: 'currency', 
+                        currency: 'BRL', 
+                        precision: 2 
+                    },
+                    customizeText: function(cellInfo) {
+                        if (cellInfo.value !== undefined && cellInfo.value !== null) {
+                            return cellInfo.value.toLocaleString("pt-BR", {
+                                style: "currency",
+                                currency: "BRL",
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            });
+                        }
+                    },
+                    calculateCellValue: function(rowData) {
+                        let valorRecebido = 0;
+                        let juros = 0;
+                        let desconto = 0;
+                        let valorDevolvido = 0;
+
+                        if (rowData.custom_valor_recebido) {
+                            valorRecebido = rowData.custom_valor_recebido;
+                        }
+                        if (rowData.custom_juros) {
+                            juros = rowData.custom_juros;
+                        }
+                        if (rowData.custom_desconto) {
+                            desconto = rowData.custom_desconto;
+                        }
+                        if (rowData.custom_valor_devolvido) {
+                            valorDevolvido = rowData.custom_valor_devolvido;
+                        }
+
+                        // Realizando o cálculo do Valor Líquido
+                        return valorRecebido + desconto - juros - valorDevolvido;
+                    }
+                },
+                { 
+                    dataField: 'valor_parcela', 
+                    caption: 'Valor Parcela', 
+                    allowEditing: false, 
+                    alignment: 'center', 
+                    width: 150, 
+                    dataType: 'number', 
+                    format: { type: 'currency', currency: 'BRL', precision: 2 },
+                    customizeText: function(cellInfo) {
+                        if (cellInfo.value !== undefined && cellInfo.value !== null) {
+                            var numericValue = Number(cellInfo.value);
+                            if (isNaN(numericValue)) {
+                                return cellInfo.value;
+                            }
+                            return numericValue.toLocaleString("pt-BR", {
+                                style: "currency",
+                                currency: "BRL",
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            });
+                        }
+                    }  
+                },
+                { 
+                    dataField: 'recebido_total_parcela', 
+                    caption: 'Baixado Softsul', 
+                    allowEditing: false, 
+                    alignment: 'center', 
+                    width: 150, 
+                    dataType: 'number', 
+                    sortOrder: 'desc',
+                    format: { type: 'currency', currency: 'BRL', precision: 2 },
+                    
+                },
+                {
+                    dataField: 'custom_observacao', 
+                    caption: 'Observação',
+                    width: 200,
+                    validationRules: [{
+                        type: 'stringLength',
+                        min: 0, // Permite observação vazia
+                        max: 500, // Limita o tamanho da observação
+                        message: 'A observação pode ter no máximo 500 caracteres.'
+                    }]
+                },
+                {
+                    dataField: 'nome_tipo_desmembramento', 
+                    caption: 'Tipo Desmembramento',
+                    visible: false,
+                }
+            ],
+            summary: {
+                totalItems: [
+                    {
+                        column: "custom_valor_liquido",  // Coluna do Valor Líquido
+                        summaryType: "sum",  // Tipo de resumo
+                        displayFormat: "Total: {0}",  // Exibir o total
+                        valueFormat: {
+                            type: "currency",  // Tipo de formato moeda
+                            currency: "BRL"    // Definir a moeda como Real Brasileiro
+                        },
+                        customizeText: function(cellInfo) {
+                            // Verifica se o valor é válido antes de formatar
+                            if (cellInfo.value !== undefined && cellInfo.value !== null) {
+                                // Exibe o valor formatado como moeda brasileira
+                                return 'R$ ' + cellInfo.value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                            }
+                            return '';
+                        }
+                    },
+                    {
+                        column: "custom_valor_recebido",  // Coluna do Valor Recebido
+                        summaryType: "sum",  // Tipo de resumo
+                        displayFormat: "Total: {0}",  // Exibir o total
+                        valueFormat: {
+                            type: "currency",  // Tipo de formato moeda
+                            currency: "BRL"    // Definir a moeda como Real Brasileiro
+                        },
+                        customizeText: function(cellInfo) {
+                            // Verifica se o valor é válido antes de formatar
+                            if (cellInfo.value !== undefined && cellInfo.value !== null) {
+                                // Exibe o valor formatado como moeda brasileira
+                                return 'R$ ' + cellInfo.value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                            }
+                            return '';
+                        }
+                    },
+                ],
+                groupItems: [],  // Caso você queira fazer agrupamento, adicione aqui.
+            },
+            onCellPrepared: function(e) {
+                // Se for uma célula de dados e a coluna não for editável...
+                if(e.rowType === "data" && e.column && e.column.allowEditing === false) {
+                    $(e.cellElement).css("background-color", "#f0f0f0"); // Fundo cinza claro
+                }
+
+                // Verifica se é uma célula de dados (não cabeçalho) e se a coluna permite edição
+                if (e.rowType === "data" && e.column) {
+                    // Acessando as propriedades de e.data em minúsculo
+                    const tipo_desmembramento = e.data['tipo_desmembramento'];
+                    const custom_data_pagamento = e.data['custom_data_pagamento'];
+                    const formaPgto = e.data['custom_forma_pgto'];
+                    const dataPagamento = e.data['custom_data_pagamento'];
+                    const vencimentoBoleto = e.data['custom_vencimento_boleto'] !== null ? new Date(e.data['custom_vencimento_boleto']) : null;
+                    const hoje = new Date()-1;
+
+                    // Verifica se os campos necessários estão presentes em e.data
+                    const valorRecebido = e.data['custom_valor_recebido'] !== undefined ? e.data['custom_valor_recebido'] : 0;
+                    const juros = e.data['custom_juros'] !== undefined ? e.data['custom_juros'] : 0;
+                    const desconto = e.data['custom_desconto'] !== undefined ? e.data['custom_desconto'] : 0;
+                    const valorDevolvido = e.data['custom_valor_devolvido'] !== undefined ? e.data['custom_valor_devolvido'] : 0;
+
+                    // Calcula o VALOR_LIQUIDO
+                    const valorLiquido = valorRecebido - juros + desconto - valorDevolvido;
+                    const recebidoTotalParcela = e.data['recebido_total_parcela'] || 0; // Total recebido da parcela
+
+                
+                    // Validação 1: Sem data de pagamento
+                    if (custom_data_pagamento == "" || custom_data_pagamento == null || custom_data_pagamento == undefined) {
+                        if (e.column.dataField === 'custom_data_pagamento') {
+                            $(e.cellElement).css("background-color", "#bf8f00");
+                        }
+                    }
+                    // Validação 2: Valor Recebido MORNO
+                    if (tipo_desmembramento !== 1 && !(valorLiquido - recebidoTotalParcela > -0.1 && valorLiquido - recebidoTotalParcela < 0.1) && (custom_data_pagamento == "" || custom_data_pagamento == null || custom_data_pagamento == undefined) && valorLiquido > 0) {
+
+                        if (e.column.dataField === 'custom_valor_recebido') {
+                            $(e.cellElement).css("background-color", "#8fe1ff"); 
+                        }
+                    }
+                    // Validação 3: Valor Recebido ERRO
+                    if (tipo_desmembramento !== 1 && !(valorLiquido - recebidoTotalParcela > -0.1 && valorLiquido - recebidoTotalParcela < 0.1) && !((custom_data_pagamento == "" || custom_data_pagamento == null || custom_data_pagamento == undefined) && valorLiquido > 0)) {
+                        if (e.column.dataField === 'custom_valor_recebido') {
+                            $(e.cellElement).css("background-color", "#ffa7a7"); 
+                        }
+                    }
+
+                     // Validação 4: Boleto Vencido
+                     if (formaPgto === "BOLETO" && (custom_data_pagamento == "" || custom_data_pagamento == null || custom_data_pagamento == undefined) && vencimentoBoleto <= hoje) {
+                        if (e.column.dataField === 'custom_vencimento_boleto') {
+                            $(e.cellElement).css("background-color", "#ffa7a7"); 
+                        }
+                    }
+
+                    // if ((valorLiquido == recebidoTotalParcela)) {
+                    //     if (e.column.dataField === 'custom_valor_liquido') {
+                    //         $(e.cellElement).css("background-color", "#f0f0f0");   
+                    //     }
+                    //     if (e.column.dataField === 'custom_valor_recebido') {
+                    //         $(e.cellElement).css("background-color", "");  
+                    //     }
+                    // }
+                }
+            },
+            onRowUpdating: function(e) {
+                e.newData = { ...e.oldData, ...e.newData };
+            },
+            onEditorPreparing: function(e) {
+                if (e.dataField === 'custom_vencimento_parcela') {
+                    e.editorOptions.onValueChanged = function(args) {
+                        // Acessa os dados da linha
+                        var grid = $("#gridContainer").dxDataGrid("instance");
+                        var rowData = e.row.data;
+                        var rowIndex = e.row.rowIndex;
+                        pedido.custom_codigo = rowData.custom_codigo; 
+                        pedido.custom_vencimento_parcela = formatarData(args.value);
+                        rowData.custom_vencimento_parcela = args.value;
+
+                        if (pedido.custom_codigo && pedido.custom_vencimento_parcela) {
+                            // Chama a função para realizar a requisição passando o objeto 'pedido'
+                            carregarDadosPedido(pedido, rowIndex, grid);
+                        }
+                    };
+                }
+            },
+        }).dxDataGrid('instance');
+    });
+    
+    // Função para formatar a data
+    function formatarData(data) {
+        const date = new Date(data);
+        const dia = ('0' + date.getDate()).slice(-2);
+        const mes = ('0' + (date.getMonth() + 1)).slice(-2);
+        const ano = date.getFullYear();
+        return `${dia}/${mes}/${ano}`;
+    }
+
+    function carregarDadosPedido(pedido, rowIndex, grid) {
+        $.ajax({
+            url: '/credito-e-cobranca/get-info-pedido',
+            method: 'GET',
+            data: pedido,
+            dataType: 'json'
+        }).done(function(response) {
+            if (response.success) {
+                // Atualiza as colunas desejadas sem afetar 'custom_vencimento_parcela'
+                grid.cellValue(rowIndex, "id", response.data[0].id);
+                grid.cellValue(rowIndex, "nome_cliente", response.data[0].nome_cliente);
+                grid.cellValue(rowIndex, "valor_parcela", response.data[0].valor_parcela);
+                grid.cellValue(rowIndex, "recebido_total_parcela", response.data[0].recebido_total_parcela);
+            } else {
+                grid.cellValue(rowIndex, "id", null);
+                grid.cellValue(rowIndex, "nome_cliente", null);
+                grid.cellValue(rowIndex, "valor_parcela", 0);
+                grid.cellValue(rowIndex, "recebido_total_parcela", 0);
+                DevExpress.ui.notify("Não foi encontrado dados do pedido para o código e vencimento informados.", "error", 3000);
+            }
+        }).fail(function() {
+            DevExpress.ui.notify("Erro ao carregar dados do pedido", "error", 3000);
+        });
+    }
+
+    
+
+</script>
