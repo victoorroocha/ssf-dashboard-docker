@@ -468,10 +468,41 @@ class CreditoECobrancaController extends BaseController
                 }
             }
 
+            // Inicializa array agrupado
+            $resultadoAgrupado = [];
+            foreach ($result as $item) {
+                $chave = $item['codigo'] . '|' . $item['numero_parcela'] . '|' . $item['cliente_id'] . '|' . $item['nome_cliente'] . '|' . $item['custom_forma_pgto'] . '|' . $item['data_pagamento'];
+                
+                if (!isset($resultadoAgrupado[$chave])) {
+                    $resultadoAgrupado[$chave] = [
+                        'codigo' => $item['codigo'],
+                        'numero_parcela' => $item['numero_parcela'],
+                        'cliente_id' => $item['cliente_id'],
+                        'nome_cliente' => $item['nome_cliente'],
+                        'custom_forma_pgto' => $item['custom_forma_pgto'],
+                        'data_pagamento' => $item['data_pagamento'],
+                        'valor_recebido' => 0,
+                        'recebido_germoplasma' => 0,
+                        'recebido_royalties' => 0,
+                        'recebido_tsi' => 0,
+                        'recebido_frete' => 0
+                    ];
+                }
+                
+                $resultadoAgrupado[$chave]['valor_recebido'] += $item['valor_recebido'];
+                $resultadoAgrupado[$chave]['recebido_germoplasma'] += $item['recebido_germoplasma'];
+                $resultadoAgrupado[$chave]['recebido_royalties'] += $item['recebido_royalties'];
+                $resultadoAgrupado[$chave]['recebido_tsi'] += $item['recebido_tsi'];
+                $resultadoAgrupado[$chave]['recebido_frete'] += $item['recebido_frete'];
+            }
+
+            // Converte para array final
+            $resultadoFinal = array_values($resultadoAgrupado);
+
             // Retorna os dados como JSON
             return new JsonModel([
                 'success' => true,
-                'data' => $result
+                'data' => $resultadoFinal
             ]);
         } catch (\Exception $e) {
 
