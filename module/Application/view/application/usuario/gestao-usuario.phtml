@@ -1,0 +1,310 @@
+<style>.full-width-group .dx-item {
+    width: 100% !important;
+}</style>
+
+<!-- Begin Page Content -->
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Gestão Usuários</h1>
+    </div>
+
+    <!-- Content Row -->
+    <div class="row">
+        <div class="col-lg-12 mb-4">
+            <!-- Approach -->
+            <div class="card shadow mb-4">
+                <div class="card-body">
+                    <p>Gestão Usuários</p>
+
+                    <!-- Grid Container for the DataGrid -->
+                    <div id="gridContainer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /.container-fluid -->
+
+
+<script>
+    $(document).ready(function() {
+        let dataGrid = $('#gridContainer').dxDataGrid({
+            dataSource: new DevExpress.data.CustomStore({
+                key: 'id', // Chave única da tabela
+                loadMode: "processed",
+                load: function(loadOptions) {
+                    // Parâmetros para a requisição
+                    let params = {
+                        skip: loadOptions.skip || 0,
+                        take: loadOptions.take || 500,
+                        sort: loadOptions.sort ? JSON.stringify(loadOptions.sort) : null,
+                    };
+
+                    return $.ajax({
+                        url: '/usuario/list-usuarios', // Endpoint para listar usuários
+                        method: 'GET',
+                        dataType: 'json',
+                        data: params,
+                    }).then(response => {
+                        if (response.success) {
+                            return {
+                                data: response.data,
+                                totalCount: response.totalCount // Total de registros
+                            };
+                        } else {
+                            DevExpress.ui.notify(response.message, "error", 3000);
+                            return { data: [], totalCount: 0 };
+                        }
+                    }).catch(error => {
+                        if (error.responseJSON) {
+                            DevExpress.ui.notify(error.responseJSON.message, "error", 3000);
+                            return { data: [], totalCount: 0 };
+                        } else {
+                            DevExpress.ui.notify("Erro ao buscar dados!", "error", 3000);
+                            return { data: [], totalCount: 0 };
+                        }
+                    });
+                },
+                update: function(key, values) {
+                    return $.ajax({
+                        url: '/usuario/add-or-update-usuario', 
+                        method: 'PUT',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ id: key, ...values }),
+                        dataType: 'json'
+                    }).then(response => {
+                        if (!response.success) {
+                            DevExpress.ui.notify(response.message, "error", 3000);
+                        } else {
+                            DevExpress.ui.notify(response.message, "success", 2000);
+                        }
+                        return response;
+                    }).catch(error => {
+                        if (error.responseJSON) {
+                            DevExpress.ui.notify(error.responseJSON.message, "error", 3000);
+                            return {};
+                        } else {
+                            DevExpress.ui.notify("Erro ao atualizar dados!", "error", 3000);
+                            return {};
+                        }
+                    });
+                },
+                insert: function(values) {
+                    return $.ajax({
+                        url: '/usuario/add-or-update-usuario',
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(values), // Envia os valores do novo usuário
+                        dataType: 'json'
+                    }).then(response => {
+                        if (!response.success) {
+                            DevExpress.ui.notify(response.message, "error", 3000);
+                        } else {
+                            DevExpress.ui.notify(response.message, "success", 2000);
+                        }
+                        return response;
+                    }).catch(error => {
+                        if (error.responseJSON) {
+                            DevExpress.ui.notify(error.responseJSON.message, "error", 3000);
+                            return {};
+                        } else {
+                            DevExpress.ui.notify("Erro ao inserir dados!", "error", 3000);
+                            return {};
+                        }
+                    });
+                },
+                remove: function(key) {
+                    return $.ajax({
+                        url: '/usuario/excluir-usuario', // Endpoint para excluir usuário
+                        method: 'DELETE',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ id: key }), // Envia o ID do usuário a ser excluído
+                        dataType: 'json'
+                    }).then(response => {
+                        if (!response.success) {
+                            DevExpress.ui.notify(response.message, "error", 3000);
+                        } else {
+                            DevExpress.ui.notify(response.message, "success", 2000);
+                        }
+                        return response;
+                    }).catch(error => {
+                        if (error.responseJSON) {
+                            DevExpress.ui.notify(error.responseJSON.message, "error", 3000);
+                            return {};
+                        } else {
+                            DevExpress.ui.notify("Erro ao excluir dados!", "error", 3000);
+                            return {};
+                        }
+                    });
+                }
+            }),
+            width: '100%',
+            columnAutoWidth: true,
+            elementAttr: {
+                class: "grid-personalizada"
+            },
+            keyExpr: 'ID', 
+            showBorders: true,
+            groupPanel: {
+                visible: true,
+            },
+            grouping: {
+                autoExpandAll: false // Impede que os grupos sejam expandidos automaticamente
+            },
+            toolbar: {
+                items: [
+                    {
+                        name: "refresh",
+                        location: "after",
+                        widget: "dxButton",
+                        options: {
+                            icon: "refresh",
+                            onClick: function() {
+                                $("#gridContainer").dxDataGrid("instance").refresh();
+                            },
+                            text: "Atualizar"
+                        }
+                    },
+                    {
+                        name: "addRowButton",
+                        location: "after",
+                        widget: "dxButton",
+                        options: {
+                            icon: "plus",
+                            onClick: function() {
+                                $("#gridContainer").dxDataGrid("instance").addRow();
+                            },
+                            text: "Adicionar Usuário"
+                        }
+                    }
+                ]
+            },
+            editing: {
+                mode: 'form',
+                allowUpdating: true,
+                allowAdding: true,
+                allowDeleting: true,
+                useIcons: true,
+                form: {
+                    items: [
+                        {
+                            dataField: 'nome',
+                            caption: 'Nome',
+                            validationRules: [{ type: 'required', message: 'Nome é obrigatório' }],
+                            editorOptions: {
+                                width: '100%', // Garante que o campo ocupe 100% da largura
+                            }
+                        },
+                        {
+                            dataField: 'email',
+                            caption: 'Email',
+                            validationRules: [
+                                { type: 'required', message: 'Email é obrigatório' },
+                                { type: 'email', message: 'Email inválido' }
+                            ],
+                            editorOptions: {
+                                width: '100%', 
+                            }
+                        },
+                        {
+                            dataField: 'senha',
+                            caption: 'Senha',
+                            editorOptions: {
+                                mode: 'password',
+                                width: '100%', 
+                            },
+                        },
+                        {
+                            dataField: 'role',
+                            caption: 'Função',
+                            editorType: 'dxSelectBox',
+                            editorOptions: {
+                                items: ["Auxiliar", "Assistente", "Analista", "Coordenador", "Gerente", "Diretor", "Administrador"],
+                                width: '100%', 
+                            },
+                            validationRules: [{ type: 'required', message: 'Função é obrigatória' }]
+                        },
+                        {
+                            dataField: 'ativo',
+                            caption: 'Ativo',
+                            editorType: 'dxCheckBox',
+                            editorOptions: {
+                                width: '100%', 
+                            }
+                        }
+                    ]
+                }, 
+                texts: {
+                    confirmDeleteMessage: "Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita." 
+                }
+            },
+            selection: {
+                mode: 'multiple',
+                showCheckBoxesMode: 'none'
+            },
+            hoverStateEnabled: true,
+            pager: {
+                visible: false
+            },
+            paging: false,
+            headerFilter: {
+                visible: true,
+            },
+            filterRow: {
+                visible: true,
+                applyFilter: 'auto',
+            },
+            export: {
+                enabled: true,
+                fileName: "Lista de Usuários",
+                allowExportSelectedData: false,
+            },
+            searchPanel: {
+                visible: true,
+                width: 240,
+                placeholder: 'Procure...',
+            },
+            columns: [
+                {
+                    dataField: 'id',
+                    caption: 'ID',
+                    allowEditing: false, // Não permite edição do ID
+                    alignment: 'center', 
+                    width: 65,
+                    sortOrder: 'asc'
+                },
+                {
+                    dataField: 'nome',
+                    caption: 'Nome',
+                },
+                {
+                    dataField: 'senha',
+                    caption: 'Senha',
+                    visible: false
+                },
+                {
+                    dataField: 'email',
+                    caption: 'Email',
+                },
+                {
+                    dataField: 'role',
+                    caption: 'Função',
+                    alignment: 'center', 
+                    groupIndex: 0
+                },
+                {
+                    dataField: 'ativo',
+                    caption: 'Ativo',
+                    dataType: 'boolean',
+                    alignment: 'center', 
+                    width: 100
+                }
+            ],
+            onRowUpdating: function(e) {
+                e.newData = { ...e.oldData, ...e.newData };
+            }
+        });
+
+    });
+</script>

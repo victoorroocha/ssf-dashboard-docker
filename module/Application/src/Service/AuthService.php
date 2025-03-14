@@ -20,21 +20,25 @@ class AuthService
         $sql = new Sql($this->dbAdapter);
         $select = $sql->select('usuario');
         $select->where(['email' => $email]);
-    
+        
         $statement = $sql->prepareStatementForSqlObject($select);
         $result = $statement->execute();
-
     
         if ($result->count() == 1) {
             $user = $result->current();
-
+    
+            // Verifica se o usuário está ativo
+            if (!$user['ativo']) {
+                return null; // Não permite a autenticação se o usuário não estiver ativo
+            }
+    
             $bcrypt = new Bcrypt();
-            
+    
             if ($bcrypt->verify($senha, $user['senha'])) {
                 return $user;
             }
         }
         
-        return null;
+        return null; // Se não encontrar o usuário ou a senha não corresponder, retorna null
     }
 }

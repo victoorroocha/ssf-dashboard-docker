@@ -12,16 +12,6 @@ use Application\Repository\CreditoECobrancaRepository;  // Importar repositório
 return [
     'router' => [
         'routes' => [
-            'menu' => [
-                'type'    => Segment::class,
-                'options' => [
-                    'route'    => '/menu[/:action]',
-                    'defaults' => [
-                        'controller' => Controller\MenuController::class,
-                        'action'     => 'list',
-                    ],
-                ],
-            ],
             'home' => [
                 'type'    => Literal::class,
                 'options' => [
@@ -78,8 +68,36 @@ return [
                 'options' => [
                     'route'    => '/db-test',
                     'defaults' => [
-                        'controller' => Controller\DbController::class, // Certifique-se de que o controlador está correto aqui
+                        'controller' => Controller\DbController::class, 
                         'action'     => 'test',
+                    ],
+                ],
+            ],
+            'usuario' => [
+                'type'    => Segment::class,
+                'options' => [
+                    'route'    => '/usuario[/:action][/:id]',
+                    'constraints' => [
+                        'action' => '[a-zA-Z][a-zA-Z0-9_-]*',  
+                        'id'     => '[0-9]+',  
+                    ],
+                    'defaults' => [
+                        'controller' => Controller\UsuarioController::class,
+                        'action'     => 'index',  
+                    ],
+                ],
+            ],
+            'menu' => [
+                'type'    => Segment::class,
+                'options' => [
+                    'route'    => '/menu[/:action][/:id]',
+                    'constraints' => [
+                        'action' => '[a-zA-Z][a-zA-Z0-9_-]*',
+                        'id'     => '[0-9]+',
+                    ],
+                    'defaults' => [
+                        'controller' => Controller\MenuController::class,
+                        'action'     => 'index',
                     ],
                 ],
             ],
@@ -87,10 +105,10 @@ return [
             'credito-e-cobranca' => [
                 'type'    => Segment::class,
                 'options' => [
-                    'route'    => '/credito-e-cobranca[/:action][/:id]',  // Aceita qualquer ação e um ID opcional
+                    'route'    => '/credito-e-cobranca[/:action][/:id]',  
                     'constraints' => [
-                        'action' => '[a-zA-Z][a-zA-Z0-9_-]*',  // Restringe action a caracteres alfanuméricos e underscores
-                        'id'     => '[0-9]+',  // ID opcional deve ser numérico
+                        'action' => '[a-zA-Z][a-zA-Z0-9_-]*',  
+                        'id'     => '[0-9]+',  
                     ],
                     'defaults' => [
                         'controller' => Controller\CreditoECobrancaController::class,
@@ -111,9 +129,10 @@ return [
                 );
             },
             Controller\DbController::class => Factory\GenericControllerFactory::class,  
-            Controller\CreditoECobrancaController::class => Factory\GenericControllerFactory::class,
             Controller\LoginController::class => Factory\LoginControllerFactory::class,
             Controller\ErrorController::class => Factory\GenericControllerFactory::class,
+            Controller\CreditoECobrancaController::class => Factory\GenericControllerFactory::class,
+            Controller\UsuarioController::class => Factory\GenericControllerFactory::class,
         ],
     ],
     'service_manager' => [
@@ -137,12 +156,23 @@ return [
                     'WE8MSWIN1252'
                 );
             },
-            'Application\Repository\MenuRepository' => function($container) {
-                return new \Application\Repository\MenuRepository(
-                    $container->get('Laminas\Db\Adapter\Adapter')
-                );
-            },
             CreditoECobrancaRepository::class => InvokableFactory::class, 
+            'Application\Repository\UsuarioRepository' => function ($container) {
+                $adapter = $container->get('Laminas\Db\Adapter\Adapter');
+                return new \Application\Repository\UsuarioRepository($adapter);
+            },
+            'Application\Controller\UsuarioController' => function ($container) {
+                $usuarioRepository = $container->get('Application\Repository\UsuarioRepository');
+                return new \Application\Controller\UsuarioController($usuarioRepository);
+            }, 
+            'Application\Controller\MenuController' => function ($container) {
+                $menuRepository = $container->get('Application\Repository\MenuRepository');
+                return new \Application\Controller\MenuController($menuRepository);
+            }, 
+            'Application\Repository\MenuRepository' => function ($container) {
+                $adapter = $container->get('Laminas\Db\Adapter\Adapter'); // Certifique-se de que o adapter está sendo injetado
+                return new \Application\Repository\MenuRepository($adapter);
+            },
         ],
     ],
     'view_manager' => [

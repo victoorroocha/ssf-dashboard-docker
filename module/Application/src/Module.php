@@ -48,12 +48,8 @@ class Module
         // Verifica se a ação requer autenticação
         $controllerName = $routeMatch->getParam('controller'); // Nome do controlador
 
-        // Adicione os controladores que necessitam de autenticação
-        $protectedControllers = [
-            'Application\Controller\CreditoECobrancaController',  // Exemplo de controlador
-        ];
-
-        if (in_array($controllerName, $protectedControllers)) {
+        // Verifica se o controlador está dentro do namespace protegido
+        if (strpos($controllerName, 'Application\Controller') === 0) {
             if (!isset($session->user)) {
                 // Realiza o redirecionamento diretamente com a aplicação
                 $application = $e->getApplication();

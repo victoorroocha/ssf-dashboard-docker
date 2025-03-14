@@ -1,0 +1,83 @@
+<!-- Begin Page Content -->
+<div class="container-fluid">
+    <!-- Content Row -->
+    <div class="row justify-content-center">
+        <div class="col-lg-12 mb-4">
+            <!-- Approach -->
+            <div class="card shadow mb-4" style="max-width: 90%; margin: 0 auto;">
+                <div class="card-body">
+                    <p>Perfil</p>
+
+                    <div id="form-container">
+                        <div id="form"></div> <!-- Seu formulário aqui -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- /.container-fluid -->
+
+
+<script>
+    $(document).ready(function() {
+        // Simulação de dados do usuário logado
+        let usuario = <?php echo json_encode($this->sessao, JSON_UNESCAPED_UNICODE); ?>;
+
+        // Simulação de usuário autenticado e sua role
+        let usuarioLogado = { role: usuario.role };
+
+        $("#form").dxForm({
+            formData: usuario,
+            colCount: 1, // Define que cada item ocupa uma linha inteira
+            items: [
+                {
+                    dataField: "nome",
+                    label: { text: "Nome" },
+                    editorOptions: { width: "100%" },
+                },
+                {
+                    dataField: "senha",
+                    label: { text: "Senha" },
+                    editorType: "dxTextBox",
+                    editorOptions: {
+                        mode: "password",
+                        width: "100%",
+                    },
+                },
+                {
+                    itemType: "button",
+                    horizontalAlignment: "center",
+                    buttonOptions: {
+                        text: "Salvar",
+                        type: "success",
+                        width: "100%",
+                        onClick: function () {
+                            let formData = $("#form").dxForm("instance").option("formData");
+
+                            // Envia os dados para o backend
+                            $.ajax({
+                                url: '/usuario/atualiza-perfil',
+                                method: 'POST',
+                                data: formData,
+                                success: function (response) {
+                                    if (response.success) {
+                                        DevExpress.ui.notify("Dados salvos com sucesso!", "success", 2000);
+                                    } else {
+                                        DevExpress.ui.notify(response.message, "error", 2000);
+                                    }
+                                },
+                                error: function () {
+                                    DevExpress.ui.notify("Erro ao salvar os dados.", "error", 2000);
+                                },
+                            });
+                        },
+                    },
+                },
+            ],
+        });
+
+    });
+</script>

@@ -1,0 +1,116 @@
+<!-- Begin Page Content -->
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Gestão Menu</h1>
+    </div>
+
+    <!-- Content Row -->
+    <div class="row">
+        <div class="col-lg-12 mb-4">
+            <!-- Approach -->
+            <div class="card shadow mb-4">
+                <div class="card-body">
+                    <p>Gestão Menu</p>
+
+                    <div id="treeListContainer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /.container-fluid -->
+
+
+<script>
+    $(document).ready(function() {
+        $('#treeListContainer').dxTreeList({
+            dataSource: new DevExpress.data.CustomStore({
+                key: 'id',
+                loadMode: 'processed',
+                load: function () {
+                    return $.ajax({
+                        url: '/menu/listar-menus',
+                        method: 'GET',
+                        dataType: 'json',
+                    }).then(response => {
+                        if (response.success) {
+                            return response.data;
+                        } else {
+                            DevExpress.ui.notify(response.message, 'error', 3000);
+                            return [];
+                        }
+                    }).catch(error => {
+                        DevExpress.ui.notify('Erro ao carregar menus!', 'error', 3000);
+                        return [];
+                    });
+                },
+                insert: function (values) {
+                    return $.ajax({
+                        url: '/menu/inserir-menu',
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(values),
+                        dataType: 'json',
+                    }).then(response => {
+                        if (!response.success) {
+                            DevExpress.ui.notify(response.message, 'error', 3000);
+                        }
+                        return response;
+                    });
+                },
+                update: function (key, values) {
+                    return $.ajax({
+                        url: '/menu/atualizar-menu',
+                        method: 'PUT',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ id: key, ...values }),
+                        dataType: 'json',
+                    }).then(response => {
+                        if (!response.success) {
+                            DevExpress.ui.notify(response.message, 'error', 3000);
+                        }
+                        return response;
+                    });
+                },
+                remove: function (key) {
+                    return $.ajax({
+                        url: '/menu/excluir-menu',
+                        method: 'DELETE',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ id: key }),
+                        dataType: 'json',
+                    }).then(response => {
+                        if (!response.success) {
+                            DevExpress.ui.notify(response.message, 'error', 3000);
+                        }
+                        return response;
+                    });
+                },
+            }),
+            keyExpr: 'id',
+            parentIdExpr: 'parent_id',
+            hoverStateEnabled: true,
+            editing: {
+                allowAdding: true,
+                allowUpdating: true,
+                allowDeleting: true,
+                mode: 'batch',
+                useIcons: true,
+                texts: {
+                    confirmDeleteMessage: "Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita." 
+                }
+            },
+            columns: [
+                { dataField: 'label', caption: 'Nome do Menu', validationRules: [{ type: 'required', message: 'A Nome do menu é obrigatório' }]  },
+                { dataField: 'link', caption: 'Link'},
+                { dataField: 'icon', caption: 'Ícone', alignment: 'center', },
+                { dataField: 'order', caption: 'Ordem', alignment: 'center', width: 60, validationRules: [{ type: 'required', message: 'A ordem é obrigatória' }]  },
+            ],
+            showBorders: true,
+            onRowUpdating: function(e) {
+                e.newData = { ...e.oldData, ...e.newData };
+            }
+        });
+    });
+</script>

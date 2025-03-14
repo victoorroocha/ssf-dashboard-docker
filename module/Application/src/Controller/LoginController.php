@@ -50,7 +50,7 @@ class LoginController extends AbstractActionController
             } else {
                 return new JsonModel([
                     'success' => false,
-                    'message' => 'Usuário ou senha inválidos.'
+                    'message' => 'Usuário não existe ou senha inválida.'
                 ]);
             }
         }

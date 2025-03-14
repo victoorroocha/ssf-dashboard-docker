@@ -1,0 +1,207 @@
+<style>
+    #container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .title {
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    #salvarButton {
+        margin-top: 20px;
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Gestão Usuários Menu</h1>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-12 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-body">
+                    <p>Gestão Usuários Menu</p>
+
+                    <div id="container">
+                        <!-- SelectBox de Usuários -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="title">Usuários</div>
+                                <div id="usuariosSelectBox"></div>
+                            </div>
+                        </div>
+
+                        <!-- TreeList de Menus com Seleção -->
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <div id="menusTreeList"></div>
+                            </div>
+                        </div>
+
+                        <!-- Botão de Salvar -->
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <div id="salvarButton"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<script>
+    $(document).ready(function() {
+        let usuarioSelecionado = null;
+        let menusSelecionados = [];
+
+        // Lista de usuários
+        const usuariosSelectBox = $('#usuariosSelectBox').dxSelectBox({
+            dataSource: new DevExpress.data.DataSource({
+                load: function () {
+                    return $.ajax({
+                        url: '/usuario/list-usuarios',
+                        method: 'GET',
+                        dataType: 'json',
+                    }).then(response => {
+                        if (response.success) {
+                            // Filtra os usuários que não são administradores
+                            return response.data
+                                .filter(usuario => usuario.role !== 'Administrador')
+                                .map(usuario => ({
+                                    id: usuario.id,
+                                    nome: usuario.nome,
+                                }));
+                        } else {
+                            DevExpress.ui.notify(response.message, 'error', 3000);
+                            return [];
+                        }
+                    });
+                },
+            }),
+            displayExpr: 'nome',
+            valueExpr: 'id',
+            placeholder: 'Selecione um usuário',
+            onValueChanged: function (e) {
+                usuarioSelecionado = e.value;
+                if (usuarioSelecionado) {
+                    carregarMenusDoUsuario(usuarioSelecionado);
+                }
+            },
+        }).dxSelectBox('instance');
+
+        // TreeList de Menus
+        const menusTreeList = $('#menusTreeList').dxTreeList({
+            dataSource: new DevExpress.data.CustomStore({
+                key: 'id',
+                loadMode: 'processed',
+                load: function () {
+                    return $.ajax({
+                        url: '/menu/listar-menus',
+                        method: 'GET',
+                        dataType: 'json',
+                    }).then(response => {
+                        if (response.success) {
+                            return response.data;
+                        } else {
+                            DevExpress.ui.notify(response.message, 'error', 3000);
+                            return [];
+                        }
+                    });
+                },
+            }),
+            keyExpr: 'id',
+            parentIdExpr: 'parent_id',
+            showBorders: true,
+            columns: [
+                {
+                    dataField: 'label',
+                    caption: 'Nome do Menu',
+                },
+                {
+                    caption: 'Selecionar',
+                    cellTemplate: function (container, options) {
+                        const menuId = options.data.id;
+                        const isSelecionado = menusSelecionados.includes(menuId);
+
+                        $('<div>').dxCheckBox({
+                            value: isSelecionado,
+                            onValueChanged: function (e) {
+                                if (e.value) {
+                                    // Adiciona o menu à lista de selecionados
+                                    menusSelecionados.push(menuId);
+                                } else {
+                                    // Remove o menu da lista de selecionados
+                                    menusSelecionados = menusSelecionados.filter(id => id !== menuId);
+                                }
+
+                                // Atualiza a TreeList para refletir as mudanças
+                                menusTreeList.refresh();
+                            },
+                        }).appendTo(container);
+                    },
+                },
+            ],
+        }).dxTreeList('instance');
+
+        // Botão de salvar
+        const salvarButton = $('#salvarButton').dxButton({
+            text: 'Salvar',
+            type: 'success',
+            onClick: function () {
+                if (!usuarioSelecionado) {
+                    DevExpress.ui.notify('Selecione um usuário!', 'error', 3000);
+                    return;
+                }
+
+                if (!menusSelecionados || menusSelecionados.length === 0) {
+                    DevExpress.ui.notify('Selecione pelo menos um menu!', 'error', 3000);
+                    return;
+                }
+
+                // Associa os menus ao usuário
+                $.ajax({
+                    url: '/menu/associar-menus-ao-usuario',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        usuario_id: usuarioSelecionado,
+                        menu_ids: menusSelecionados,
+                    }),
+                    dataType: 'json',
+                }).then(response => {
+                    if (response.success) {
+                        DevExpress.ui.notify('Menus associados com sucesso!', 'success', 3000);
+                    } else {
+                        DevExpress.ui.notify(response.message, 'error', 3000);
+                    }
+                });
+            },
+        }).dxButton('instance');
+
+        // Função para carregar os menus de um usuário
+        function carregarMenusDoUsuario(usuarioId) {
+            $.ajax({
+                url: '/menu/listar-menus-por-usuario',
+                method: 'GET',
+                data: { usuario_id: usuarioId },
+                dataType: 'json',
+            }).then(response => {
+                if (response.success) {
+                    menusSelecionados = response.data.map(id => Number(id)); // Atualiza os menus selecionados
+                    menusTreeList.refresh(); // Atualiza a TreeList para refletir as seleções
+                } else {
+                    DevExpress.ui.notify(response.message, 'error', 3000);
+                }
+            });
+        }
+    });
+</script>
