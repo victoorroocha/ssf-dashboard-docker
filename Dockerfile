@@ -1,78 +1,55 @@
-FROM php:8.3-apache
+FROM php:8.3-cli
 
-LABEL maintainer="getlaminas.org" \
-    org.label-schema.docker.dockerfile="/Dockerfile" \
-    org.label-schema.name="Laminas MVC Skeleton" \
-    org.label-schema.url="https://docs.getlaminas.org/mvc/" \
-    org.label-schema.vcs-url="https://github.com/laminas/laminas-mvc-skeleton"
-
-## Update package information
-RUN apt-get update
-
-## Configure Apache
-RUN a2enmod rewrite \
-    && sed -i 's!/var/www/html!/var/www/public!g' /etc/apache2/sites-available/000-default.conf \
-    && mv /var/www/html /var/www/public
-
-## Install Composer
-RUN curl -sS https://getcomposer.org/installer \
-  | php -- --install-dir=/usr/local/bin --filename=composer
-
-###
-## PHP Extensisons
-###
-
-## Install zip libraries and extension
-RUN apt-get install --yes git zlib1g-dev libzip-dev \
-    && docker-php-ext-install zip
-
-## Install intl library and extension
-RUN apt-get install --yes libicu-dev \
-    && docker-php-ext-configure intl \
-    && docker-php-ext-install intl
-
-###
-## Optional PHP extensions 
-###
-
-## mbstring for i18n string support
-# RUN docker-php-ext-install mbstring
-
-###
-## Some laminas/laminas-db supported PDO extensions
-###
-
-## MySQL PDO support
-# RUN docker-php-ext-install pdo_mysql
-
-## PostgreSQL PDO support
-# RUN apt-get install --yes libpq-dev \
-#     && docker-php-ext-install pdo_pgsql
-
-###
-## laminas/laminas-cache supported extensions
-###
-
-## APCU
-# RUN pecl install apcu \
-#     && docker-php-ext-enable apcu
-
-## Memcached
-# RUN apt-get install --yes libmemcached-dev \
-#     && pecl install memcached \
-#     && docker-php-ext-enable memcached
-
-## MongoDB
-# RUN pecl install mongodb \
-#     && docker-php-ext-enable mongodb
-
-## Redis support.  igbinary and libzstd-dev are only needed based on 
-## redis pecl options
-# RUN pecl install igbinary \
-#     && docker-php-ext-enable igbinary \
-#     && apt-get install --yes libzstd-dev \
-#     && pecl install redis \
-#     && docker-php-ext-enable redis
+# Atualiza pacotes e instala dependências básicas
+RUN apt-get update && apt-get install -y \
+    unzip \
+    libaio1 \
+    libpq-dev \
+    wget \
+    && docker-php-ext-install \
+    pdo pdo_pgsql pgsql
 
 
+RUN apt-get update && apt-get install -y inotify-tools    
+
+# Instala o Oracle Instant Client
+WORKDIR /tmp
+
+# Copia os arquivos do Oracle Instant Client do host para o container
+COPY ./instantclient-basic-linux.x64-19.26.0.0.0dbru.zip /tmp/
+COPY ./instantclient-sdk-linux.x64-19.26.0.0.0dbru.zip /tmp/
+
+# Descompacta e configura o Oracle Instant Client
+RUN unzip -o /tmp/instantclient-basic-linux.x64-19.26.0.0.0dbru.zip -d /usr/local/ \
+    && unzip -o /tmp/instantclient-sdk-linux.x64-19.26.0.0.0dbru.zip -d /usr/local/ \
+    && ln -s /usr/local/instantclient_19_26 /usr/local/instantclient \
+    && echo "/usr/local/instantclient" > /etc/ld.so.conf.d/oracle-instantclient.conf \
+    && ldconfig
+
+# Define variáveis de ambiente para OCI8
+ENV ORACLE_HOME=/usr/local/instantclient
+ENV LD_LIBRARY_PATH=/usr/local/instantclient
+ENV PATH="${PATH}:/usr/local/instantclient"
+
+# Instala OCI8 via PECL
+RUN echo "instantclient,/usr/local/instantclient" | pecl install oci8 \
+    && echo "extension=oci8.so" > /usr/local/etc/php/conf.d/oci8.ini
+
+# Configuração da aplicação
 WORKDIR /var/www
+
+# Cria o diretório data/cache e define permissões
+RUN mkdir -p /var/www/data/cache && chmod -R 777 /var/www/data/cache
+
+# Instala Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Copia o código da aplicação e instala dependências
+COPY . /var/www
+RUN composer install --no-dev --optimize-autoloader
+
+COPY start.sh /usr/local/bin/start.sh
+RUN chmod +x /usr/local/bin/start.sh
+
+# Define o comando de execução do container
+CMD ["sh", "-c", "/usr/local/bin/start.sh"]

@@ -8,12 +8,13 @@ class MenuRepository
 {
     private $tableGateway;
     private $userMenuTableGateway;
+    private $adapter; // Declare a propriedade $adapter
 
     public function __construct(Adapter $adapter)
     {
         $this->tableGateway = new TableGateway('menu', $adapter);
         $this->userMenuTableGateway = new TableGateway('usuario_menu', $adapter);
-        $this->adapter = $adapter;
+        $this->adapter = $adapter; // Atribua o valor à propriedade declarada
     }
 
     /**
@@ -121,8 +122,6 @@ class MenuRepository
     
         return $subsubmenus;
     }
-    
-
 
     #region Gestão Menus
     /**
@@ -141,6 +140,7 @@ class MenuRepository
 
         return $menus;
     }
+
     /**
      * Insere um novo menu.
      */
@@ -157,6 +157,7 @@ class MenuRepository
             ':order' => $data['order'],
         ]);
     }
+
     /**
      * Atualiza um menu existente.
      */
@@ -175,6 +176,7 @@ class MenuRepository
             ':order' => $data['order'],
         ]);
     }
+
     /**
      * Exclui um menu e seus filhos (cascata).
      */
@@ -205,6 +207,7 @@ class MenuRepository
 
         return $menus;
     }
+
     /**
      * Associa menus a um usuário.
      */
@@ -223,6 +226,7 @@ class MenuRepository
             ]);
         }
     }
+
     /**
      * Remove todas as associações de menus de um usuário.
      */
@@ -233,5 +237,4 @@ class MenuRepository
         $statement->execute([':usuario_id' => $usuarioId]);
     }
     #endRegion
-
 }

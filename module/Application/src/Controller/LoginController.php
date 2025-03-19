@@ -20,7 +20,7 @@ class LoginController extends AbstractActionController
     {
         $request = $this->getRequest();
         $session = new Container('auth');
-    
+
         if ($request->isPost()) {
             $data = json_decode($request->getContent(), true) ?? $request->getPost()->toArray();
             $email = $data['email'] ?? null;
@@ -32,9 +32,9 @@ class LoginController extends AbstractActionController
                     'message' => 'Email e senha são obrigatórios.'
                 ]);
             }
-    
+
             $user = $this->authService->authenticate($email, $senha);
-    
+
             if ($user) {
                 $session->user = $user;
     

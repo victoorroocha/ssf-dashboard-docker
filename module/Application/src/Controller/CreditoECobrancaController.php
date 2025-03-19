@@ -57,7 +57,11 @@ class CreditoECobrancaController extends BaseController
                 $result = $this->oracleService->executeQuery($sql);
 
                 foreach ($result as $key => $row) {
-                    $result[$key]['dsc'] = mb_convert_encoding($row['dsc'], 'UTF-8', 'Windows-1252');
+                    if (!empty($row['dsc']) && isset($row['dsc'])) {
+                        $result[$key]['dsc'] = mb_convert_encoding($row['dsc'], 'UTF-8', 'Windows-1252');
+                    } else {
+                        $result[$key]['dsc'] = ''; 
+                    }
                 }
             }
 
@@ -95,7 +99,6 @@ class CreditoECobrancaController extends BaseController
             // Consulta no Softsul todos pedidos
             $sql = $this->creditoECobrancaRepository ? $this->creditoECobrancaRepository->getDadosSoftsulQuery($codigoSafra, $emissao_inicio, $emissao_fim) : '';
    
-
             $params = [];
             if ($codigoSafra) {
                 $params['codigoSafra'] = $codigoSafra;
@@ -155,14 +158,14 @@ class CreditoECobrancaController extends BaseController
                 // Processa os dados do Oracle
                 foreach ($result as $key => $row) {
                     // Convertendo a codificação para UTF-8
-                    $result[$key]['status'] = mb_convert_encoding($row['status'], 'UTF-8', 'Windows-1252');
-                    $result[$key]['nome_cliente'] = mb_convert_encoding($row['nome_cliente'], 'UTF-8', 'Windows-1252');
-                    $result[$key]['nome_vendedor'] = mb_convert_encoding($row['nome_vendedor'], 'UTF-8', 'Windows-1252');
-                    $result[$key]['nome_agente'] = mb_convert_encoding($row['nome_agente'], 'UTF-8', 'Windows-1252');
-                    $result[$key]['tipo_venda'] = mb_convert_encoding($row['tipo_venda'], 'UTF-8', 'Windows-1252');
-                    $result[$key]['nome_grupo_compra'] = mb_convert_encoding($row['nome_grupo_compra'], 'UTF-8', 'Windows-1252');
-                    $result[$key]['nome_tipo_desmembramento'] = mb_convert_encoding($row['nome_tipo_desmembramento'], 'UTF-8', 'Windows-1252');
-                    $result[$key]['tipo_parcela'] = mb_convert_encoding($row['tipo_parcela'], 'UTF-8', 'Windows-1252');
+                    // $result[$key]['status'] = $row['status'] !== null ? mb_convert_encoding($row['status'], 'UTF-8', 'Windows-1252') : '';
+                    // $result[$key]['nome_cliente'] = $row['nome_cliente'] !== null ? mb_convert_encoding($row['nome_cliente'], 'UTF-8', 'Windows-1252') : '';
+                    // $result[$key]['nome_vendedor'] = $row['nome_vendedor'] !== null ? mb_convert_encoding($row['nome_vendedor'], 'UTF-8', 'Windows-1252') : '';
+                    // $result[$key]['nome_agente'] = $row['nome_agente'] !== null ? mb_convert_encoding($row['nome_agente'], 'UTF-8', 'Windows-1252') : '';
+                    // $result[$key]['tipo_venda'] = $row['tipo_venda'] !== null ? mb_convert_encoding($row['tipo_venda'], 'UTF-8', 'Windows-1252') : '';
+                    // $result[$key]['nome_grupo_compra'] = $row['nome_grupo_compra'] !== null ? mb_convert_encoding($row['nome_grupo_compra'], 'UTF-8', 'Windows-1252') : '';
+                    // $result[$key]['nome_tipo_desmembramento'] = $row['nome_tipo_desmembramento'] !== null ? mb_convert_encoding($row['nome_tipo_desmembramento'], 'UTF-8', 'Windows-1252') : '';
+                    // $result[$key]['tipo_parcela'] = $row['tipo_parcela'] !== null ? mb_convert_encoding($row['tipo_parcela'], 'UTF-8', 'Windows-1252') : '';
     
                     // Conversão de valores numéricos
                     $result[$key]['valor_parcela'] = floatval(str_replace(',', '.', $result[$key]['valor_parcela']));
@@ -316,7 +319,6 @@ class CreditoECobrancaController extends BaseController
             ]);
         } catch (\Exception $e) {
             echo '<pre>insert';
-            print_r( $e->getMessage());exit;
             return new JsonModel([
                 'success' => false,
                 'message' => 'Erro ao executar consulta: ' . $e->getMessage()
@@ -374,7 +376,6 @@ class CreditoECobrancaController extends BaseController
                 $statementPg = $this->pgAdapter->query($pgSql);
                 $pgResult = $statementPg->execute();
                 
-    
                 // Mapeia os resultados do PostgreSQL em um array associativo
                 $pgData = [];
                 foreach ($pgResult as $pgRow) {
@@ -411,14 +412,14 @@ class CreditoECobrancaController extends BaseController
                 // Processa os dados do Oracle
                 foreach ($result as $key => $row) {
                     // Convertendo a codificação para UTF-8
-                    $result[$key]['status'] = mb_convert_encoding($row['status'], 'UTF-8', 'Windows-1252');
-                    $result[$key]['nome_cliente'] = mb_convert_encoding($row['nome_cliente'], 'UTF-8', 'Windows-1252');
-                    $result[$key]['nome_vendedor'] = mb_convert_encoding($row['nome_vendedor'], 'UTF-8', 'Windows-1252');
-                    $result[$key]['nome_agente'] = mb_convert_encoding($row['nome_agente'], 'UTF-8', 'Windows-1252');
-                    $result[$key]['tipo_venda'] = mb_convert_encoding($row['tipo_venda'], 'UTF-8', 'Windows-1252');
-                    $result[$key]['nome_grupo_compra'] = mb_convert_encoding($row['nome_grupo_compra'], 'UTF-8', 'Windows-1252');
-                    $result[$key]['nome_tipo_desmembramento'] = mb_convert_encoding($row['nome_tipo_desmembramento'], 'UTF-8', 'Windows-1252');
-                    $result[$key]['tipo_parcela'] = mb_convert_encoding($row['tipo_parcela'], 'UTF-8', 'Windows-1252');
+                    // $result[$key]['status'] = mb_convert_encoding($row['status'], 'UTF-8', 'Windows-1252');
+                    // $result[$key]['nome_cliente'] = mb_convert_encoding($row['nome_cliente'], 'UTF-8', 'Windows-1252');
+                    // $result[$key]['nome_vendedor'] = mb_convert_encoding($row['nome_vendedor'], 'UTF-8', 'Windows-1252');
+                    // $result[$key]['nome_agente'] = mb_convert_encoding($row['nome_agente'], 'UTF-8', 'Windows-1252');
+                    // $result[$key]['tipo_venda'] = mb_convert_encoding($row['tipo_venda'], 'UTF-8', 'Windows-1252');
+                    // $result[$key]['nome_grupo_compra'] = mb_convert_encoding($row['nome_grupo_compra'], 'UTF-8', 'Windows-1252');
+                    // $result[$key]['nome_tipo_desmembramento'] = mb_convert_encoding($row['nome_tipo_desmembramento'], 'UTF-8', 'Windows-1252');
+                    // $result[$key]['tipo_parcela'] = mb_convert_encoding($row['tipo_parcela'], 'UTF-8', 'Windows-1252');
     
                     // Conversão de valores numéricos
                     $result[$key]['valor_parcela'] = floatval(str_replace(',', '.', $result[$key]['valor_parcela']));

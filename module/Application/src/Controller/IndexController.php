@@ -12,14 +12,16 @@ class IndexController extends AbstractActionController
 {
     public function indexAction()
     {
-       
+
+        error_log('Caiu no indexxxxxxxxxxxxxxxxxxxxx'); // Log simples para verificar execução
+        // Inicializa o container de sessão 'auth'
         $session = new Container('auth');
 
-
-        if (isset($session->user)) {
-            // Usuário autenticado, renderiza a página inicial
+        // Verifica se a chave 'user' existe e contém dados
+        if (isset($session->user) && !empty($session->user)) {
+            // Usuário autenticado, renderiza a página inicial com dados do usuário
             return new ViewModel([
-                'nomeUsuario' => $session->user['nome'] , 
+                'nomeUsuario' => $session->user['nome'], 
             ]);
         } else {
             // Usuário não autenticado, redireciona para a página de login

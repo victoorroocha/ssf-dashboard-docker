@@ -1,6 +1,6 @@
 {
     "name": "laminas/laminas-mvc-skeleton",
-    "description": "Laminas MVC Skeleton Application",
+    "description": "SSF DASHBOARD",
     "type": "project",
     "license": "BSD-3-Clause",
     "keywords": [
@@ -73,6 +73,7 @@
         "test": "Run unit tests."
     },
     "config": {
+	"process-timeout": 600,
         "sort-packages": true,
         "allow-plugins": {
             "laminas/laminas-component-installer": true,

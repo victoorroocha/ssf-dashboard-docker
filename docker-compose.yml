@@ -1,7 +1,44 @@
+version: '3.8'
+
 services:
-  laminas:
-    build: .
+  laminas_app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laminas_app
     ports:
-     - "8080:80"
+      - "8080:8080"
+    environment:
+      - DB_HOST=laminas_postgres
+      - DB_USER=postgres
+      - DB_PASSWORD=admin
+      - DB_NAME=ssf_dashboard
+    depends_on:
+      - laminas_postgres
+    networks:
+      - ssf_network
+    restart: always
     volumes:
-     - .:/var/www
+      - C:\\Users\\victor.rocha\\Documents\\ssf-dashboard:/var/www/html  
+
+  laminas_postgres:
+    image: postgres:17
+    container_name: laminas_postgres
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: ssf_dashboard
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ssf_network
+
+volumes:
+  postgres_data:
+
+networks:
+  ssf_network:
+    driver: bridge

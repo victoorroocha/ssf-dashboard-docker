@@ -14,16 +14,18 @@
 
 // Global Configuration Override
 return [
-    'db' => [
-        'driver'   => 'Pdo_Pgsql',
-        'hostname' => 'localhost',
-        'database' => 'ssf_dashboard',
-        'username' => 'postgres',
-        'password' => 'admin',
-    ],
+    // 'db' => [
+    //     'driver'   => 'Pdo_Pgsql',
+    //     'hostname' => getenv('DB_HOST'),  
+    //     'database' => getenv('DB_NAME'),
+    //     'username' => getenv('DB_USER'),
+    //     'password' => getenv('DB_PASSWORD'),
+    //     'port'     => '5432',
+    // ],
     'oracle' => [
         'username'         => 'Sapiens',
         'password'         => 'Sapiens',
         'connection_string' => '192.168.0.5:1521/SSF',
     ],
 ];
+

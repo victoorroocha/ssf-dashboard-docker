@@ -10,6 +10,14 @@ use Laminas\ServiceManager\Factory\InvokableFactory;
 use Application\Repository\CreditoECobrancaRepository;  // Importar repositório
 
 return [
+    'db' => [
+        'driver'   => 'Pdo_Pgsql',
+        'hostname' => 'laminas_postgres', 
+        'database' => getenv('DB_NAME'),
+        'username' => getenv('DB_USER'),
+        'password' => getenv('DB_PASSWORD'),
+        'port'     => '5432',
+    ],
     'router' => [
         'routes' => [
             'home' => [
@@ -137,6 +145,11 @@ return [
     ],
     'service_manager' => [
         'factories' => [
+            'Laminas\Db\Adapter\Adapter' => function ($container) {
+                $config = $container->get('config')['db'];
+                error_log('Configuração do banco de dados no module.config.php: ' . print_r($config, true)); // Log da configuração
+                return new \Laminas\Db\Adapter\Adapter($config);
+            },
             Laminas\Session\SessionManager::class => Application\Factory\SessionManagerFactory::class,
             'Application\Acl\AccessControl' => function($container) {
                 return new \Application\Acl\AccessControl();
